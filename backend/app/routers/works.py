@@ -9,14 +9,15 @@ router = APIRouter(tags=["works"])
 
 
 @router.get("/works")
-def ranked_works(db: Session = Depends(get_db)):
+def ranked_works(c: str = "south-delhi", db: Session = Depends(get_db)):
     """The ranked works list with evidence cards (F5)."""
     rows = db.execute(
         text(
             "SELECT id, rank, title, category, ward_code, signal_count, "
             "       trend_7d, score, evidence, justification "
-            "FROM demands WHERE rank IS NOT NULL ORDER BY rank"
-        )
+            "FROM demands WHERE rank IS NOT NULL AND constituency = :c ORDER BY rank"
+        ),
+        {"c": c},
     ).mappings().all()
     return {"works": [dict(r) for r in rows]}
 
@@ -32,7 +33,7 @@ POP_FLOOR = 30000  # tiny areas distort per-capita normalization
 
 
 @router.get("/silent-needs")
-def silent_needs(db: Session = Depends(get_db)):
+def silent_needs(c: str = "south-delhi", db: Session = Depends(get_db)):
     """F6: silence_score = need × (1 − voice).
 
     need  = SC share (equity, capped) + colony-deficit proxy, capped at 1
@@ -48,9 +49,10 @@ def silent_needs(db: Session = Depends(get_db)):
             "FROM wards w LEFT JOIN ("
             "    SELECT ward_code, count(*) AS cnt FROM demand_signals "
             "    WHERE ward_code IS NOT NULL GROUP BY ward_code) s USING (ward_code) "
-            "WHERE w.population IS NOT NULL AND w.population >= :floor"
+            "WHERE w.population IS NOT NULL AND w.population >= :floor "
+            "AND w.constituency = :c"
         ),
-        {"floor": POP_FLOOR},
+        {"floor": POP_FLOOR, "c": c},
     ).mappings().all()
     if not rows:
         return {"wards": [], "population_floor": POP_FLOOR}

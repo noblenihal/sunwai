@@ -44,6 +44,76 @@ PLAN = [
     (None,                    "misc",        20, "flat",   None),  # unlocated
 ]
 
+# expansion constituencies (--expansion): ~60 each, local language dominant.
+# Govandi/Mankhurd kept sparse: they are Mumbai's silent-needs story.
+PLAN_EXPANSION = [
+    ("Behala",         "drainage",    16, "rising", "bn"),
+    ("Kasba",          "drainage",    10, "flat",   "bn"),
+    ("Tollygunge",     "road",        12, "flat",   "bn"),
+    ("Ballygunge",     "electricity",  9, "flat",   "bn"),
+    ("Rashbehari",     "water",        8, "flat",   "bn"),
+    ("Bhawanipur",     "road",         6, "flat",   "bn"),
+    ("Bapunagar",      "water",       14, "rising", "gu"),
+    ("Nikol",          "road",        12, "flat",   "gu"),
+    ("Vastral",        "drainage",    10, "flat",   "gu"),
+    ("Odhav",          "water",        9, "flat",   "gu"),
+    ("Naroda",         "road",         8, "flat",   "gu"),
+    ("Amraiwadi",      "electricity",  7, "flat",   "gu"),
+    ("Ghatkopar",      "water",       14, "flat",   "mr"),
+    ("Bhandup",        "drainage",    12, "rising", "mr"),
+    ("Mulund",         "road",        11, "flat",   "mr"),
+    ("Vikhroli",       "health",       9, "flat",   "mr"),
+    ("Mankhurd",       "water",        3, "sparse", "mr"),
+    ("Govandi",        "health",       2, "sparse", "mr"),
+    ("Velachery",      "drainage",    16, "spike",  "ta"),
+    ("Sholinganallur", "drainage",    11, "flat",   "ta"),
+    ("Perungudi",      "water",        9, "flat",   "ta"),
+    ("Mylapore",       "road",         8, "flat",   "ta"),
+    ("Adyar",          "electricity",  7, "flat",   "ta"),
+    ("Besant Nagar",   "road",         5, "flat",   "ta"),
+]
+
+T_REGIONAL = {
+    "drainage": {
+        "bn": ["{loc} এ নর্দমা আটকে গেছে, নোংরা জল রাস্তায় জমে থাকছে",
+               "বৃষ্টি হলেই {loc} এ জল জমে যায়, নর্দমা পরিষ্কার হয় না"],
+        "gu": ["{loc} માં ગટર ભરાઈ ગઈ છે, ગંદુ પાણી રસ્તા પર વહે છે",
+               "{loc} ની ગટર અઠવાડિયાઓથી સાફ થઈ નથી"],
+        "mr": ["{loc} मध्ये गटार तुंबले आहे, घाण पाणी रस्त्यावर येते",
+               "{loc} मधील नाल्याची सफाई महिन्यांपासून झालेली नाही"],
+        "ta": ["{loc} இல் சாக்கடை அடைத்து தண்ணீர் தெருவில் தேங்குகிறது",
+               "மழை பெய்தால் {loc} முழுவதும் வெள்ளம், வடிகால் சரியில்லை"],
+    },
+    "water": {
+        "bn": ["{loc} এ জলের খুব সমস্যা, কল থেকে জল আসছে না"],
+        "gu": ["{loc} માં પાણીની બહુ તંગી છે, ટેન્કર સમયસર આવતું નથી",
+               "{loc} માં નળમાં ગંદુ પાણી આવે છે"],
+        "mr": ["{loc} मध्ये पाण्याची खूप टंचाई आहे, टँकर वेळेवर येत नाही",
+               "{loc} मध्ये नळाला कमी दाबाने पाणी येते"],
+        "ta": ["{loc} இல் குடிநீர் பற்றாக்குறை, தண்ணீர் லாரி வருவதில்லை",
+               "{loc} இல் குழாயில் சேறு கலந்த தண்ணீர் வருகிறது"],
+    },
+    "road": {
+        "bn": ["{loc} র রাস্তায় বড় বড় গর্ত, দুর্ঘটনার ভয় থাকে"],
+        "gu": ["{loc} ના રસ્તા પર મોટા ખાડા છે, વાહનો પડી જાય છે"],
+        "mr": ["{loc} च्या रस्त्यावर मोठे खड्डे आहेत, अपघात होतात"],
+        "ta": ["{loc} சாலையில் பெரிய பள்ளங்கள், விபத்து அபாயம் உள்ளது"],
+    },
+    "electricity": {
+        "bn": ["{loc} এ রাস্তার আলো অনেকদিন খারাপ, রাতে অন্ধকার থাকে"],
+        "gu": ["{loc} માં સ્ટ્રીટ લાઈટ બંધ છે, રાત્રે અંધારું રહે છે"],
+        "mr": ["{loc} मध्ये पथदिवे बंद आहेत, रात्री अंधार असतो"],
+        "ta": ["{loc} இல் தெரு விளக்குகள் எரியவில்லை, இரவில் இருட்டாக உள்ளது"],
+    },
+    "health": {
+        "mr": ["{loc} च्या दवाखान्यात औषधे मिळत नाहीत, डॉक्टर कमी येतात",
+               "{loc} मध्ये आरोग्य केंद्राची खूप गरज आहे"],
+        "ta": ["{loc} அரசு மருத்துவமனையில் மருந்துகள் கிடைப்பதில்லை"],
+        "bn": ["{loc} র স্বাস্থ্যকেন্দ্রে ওষুধ পাওয়া যায় না"],
+        "gu": ["{loc} ના દવાખાનામાં દવાઓ મળતી નથી"],
+    },
+}
+
 T = {
     "drainage": {
         "hi": ["{loc} में नाली जाम है, गंदा पानी सड़क पर बह रहा है",
@@ -132,7 +202,20 @@ def _timestamp(shape: str, now: datetime) -> datetime:
     return ts - timedelta(minutes=random.uniform(0, 720))
 
 
-def main(fresh: bool = False):
+def _template_for(cat: str, lang_override: str | None) -> tuple[str, str]:
+    """Pick (language, template). Regional overrides use T_REGIONAL 70% of
+    the time, English/Hindi mixes otherwise (urban India is multilingual)."""
+    if lang_override and lang_override in ("bn", "gu", "mr", "ta"):
+        pool = T_REGIONAL.get(cat, {})
+        if lang_override in pool and random.random() < 0.7:
+            return lang_override, random.choice(pool[lang_override])
+        lang = "en" if "en" in T[cat] and random.random() < 0.6 else "rom"
+        return lang, random.choice(T[cat].get(lang) or T[cat]["rom"])
+    lang = _pick_lang(cat, lang_override)
+    return lang, random.choice(T[cat][lang])
+
+
+def main(fresh: bool = False, expansion: bool = False):
     db = SessionLocal()
     now = datetime.now(timezone.utc)
 
@@ -147,16 +230,16 @@ def main(fresh: bool = False):
         db.commit()
         print("[seed] previous seed wiped", flush=True)
 
+    plan = PLAN_EXPANSION if expansion else PLAN
     jobs = []
-    for loc, cat, count, shape, lang_override in PLAN:
+    for loc, cat, count, shape, lang_override in plan:
         for _ in range(count):
             jobs.append((loc, cat, shape, lang_override))
     random.shuffle(jobs)
 
     total, ok, failed = len(jobs), 0, 0
     for i, (loc, cat, shape, lang_override) in enumerate(jobs, 1):
-        lang = _pick_lang(cat, lang_override)
-        template = random.choice(T[cat][lang])
+        _lang, template = _template_for(cat, lang_override)
         msg = template.format(loc=loc) if loc else template
         ts = _timestamp(shape, now)
         try:
@@ -192,4 +275,4 @@ def main(fresh: bool = False):
 
 
 if __name__ == "__main__":
-    main(fresh="--fresh" in sys.argv)
+    main(fresh="--fresh" in sys.argv, expansion="--expansion" in sys.argv)

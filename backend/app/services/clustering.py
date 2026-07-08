@@ -16,8 +16,19 @@ WARD_SIM_THRESHOLD = 0.75
 CROSS_WARD_SIM_THRESHOLD = 0.85
 
 
-def _nearest_demand(db: Session, sig, ward_scoped: bool):
-    where = "category = :cat AND centroid IS NOT NULL"
+def _constituency_of(db: Session, ward_code: str | None) -> str:
+    if ward_code:
+        row = db.execute(
+            text("SELECT constituency FROM wards WHERE ward_code = :w"),
+            {"w": ward_code},
+        ).first()
+        if row and row[0]:
+            return row[0]
+    return "south-delhi"  # unlocated intake defaults to the pilot
+
+
+def _nearest_demand(db: Session, sig, constituency: str, ward_scoped: bool):
+    where = "category = :cat AND centroid IS NOT NULL AND constituency = :con"
     if ward_scoped:
         where += " AND ward_code IS NOT DISTINCT FROM :ward"
     row = db.execute(
@@ -26,7 +37,8 @@ def _nearest_demand(db: Session, sig, ward_scoped: bool):
             f"FROM demands WHERE {where} "
             f"ORDER BY centroid <=> (:emb)::vector LIMIT 1"
         ),
-        {"cat": sig["category"], "ward": sig["ward_code"], "emb": sig["embedding"]},
+        {"cat": sig["category"], "ward": sig["ward_code"], "emb": sig["embedding"],
+         "con": constituency},
     ).mappings().first()
     return row
 
@@ -111,14 +123,16 @@ def assign_to_demand(db: Session, signal_id: int) -> int:
     sig = dict(sig)
     sig["embedding"] = sig.pop("embedding_txt")
 
+    constituency = _constituency_of(db, sig["ward_code"])
+
     demand_id = None
     if sig["embedding"] is not None:
-        near = _nearest_demand(db, sig, ward_scoped=True)
+        near = _nearest_demand(db, sig, constituency, ward_scoped=True)
         if near and near["sim"] >= WARD_SIM_THRESHOLD:
             demand_id = near["id"]
             _attach(db, demand_id, sig, near["signal_count"])
         else:
-            near = _nearest_demand(db, sig, ward_scoped=False)
+            near = _nearest_demand(db, sig, constituency, ward_scoped=False)
             if near and near["sim"] >= CROSS_WARD_SIM_THRESHOLD:
                 demand_id = near["id"]
                 _attach(db, demand_id, sig, near["signal_count"])
@@ -152,13 +166,15 @@ def assign_to_demand(db: Session, signal_id: int) -> int:
     if demand_id is None:
         demand_id = db.execute(
             text(
-                "INSERT INTO demands (title, category, ward_code, signal_count, centroid) "
-                "VALUES (:title, :cat, :ward, 1, (:emb)::vector) RETURNING id"
+                "INSERT INTO demands (title, category, ward_code, signal_count, "
+                "centroid, constituency) "
+                "VALUES (:title, :cat, :ward, 1, (:emb)::vector, :con) RETURNING id"
             ),
             {
                 "title": _title_for(sig), "cat": sig["category"],
                 "ward": sig["ward_code"],
                 "emb": sig["embedding"],
+                "con": constituency,
             },
         ).scalar_one()
 

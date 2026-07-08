@@ -11,13 +11,20 @@ export default function App() {
   const [works, setWorks] = useState([])
   const [wards, setWards] = useState([])
   const [selected, setSelected] = useState(null)
+  const [constituencies, setConstituencies] = useState([])
+  const [con, setCon] = useState('south-delhi')
+
+  useEffect(() => {
+    fetch('/api/constituencies').then(r => r.json()).then(d => setConstituencies(d.constituencies || []))
+  }, [])
 
   const refresh = useCallback(() => {
     fetch('/api/health').then(r => r.json()).then(setHealth).catch(() => setHealth({ status: 'unreachable' }))
-    fetch('/api/demands').then(r => r.json()).then(d => setDemands(d.demands || []))
-    fetch('/api/works').then(r => r.json()).then(d => setWorks(d.works || []))
-    fetch('/api/silent-needs').then(r => r.json()).then(d => setWards(d.wards || []))
-  }, [])
+    fetch(`/api/demands?c=${con}`).then(r => r.json()).then(d => setDemands(d.demands || []))
+    fetch(`/api/works?c=${con}`).then(r => r.json()).then(d => setWorks(d.works || []))
+    fetch(`/api/silent-needs?c=${con}`).then(r => r.json()).then(d => setWards(d.wards || []))
+    setSelected(null)
+  }, [con])
 
   useEffect(() => {
     refresh()
@@ -35,11 +42,17 @@ export default function App() {
     <>
       <header>
         <h1>sunwai</h1>
-        <span>South Delhi · constituency demand intelligence</span>
+        <select value={con} onChange={e => setCon(e.target.value)}
+                style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid #d6deea', fontSize: 14 }}>
+          {constituencies.map(x => (
+            <option key={x.code} value={x.code}>{x.name}, {x.state}</option>
+          ))}
+        </select>
+        <span>constituency demand intelligence</span>
         <span style={{ marginLeft: 'auto' }}>
           api: {health ? `${health.status} · db ${health.database ?? '?'}` : '…'}
         </span>
-        <a href="/api/brief" target="_blank" rel="noreferrer"
+        <a href={`/api/brief?c=${con}`} target="_blank" rel="noreferrer"
            style={{ background: '#1a53ff', color: '#fff', padding: '7px 14px', borderRadius: 8, fontSize: 13, textDecoration: 'none' }}>
           Export MP Brief
         </a>
@@ -52,7 +65,8 @@ export default function App() {
       <main>
         {tab === 'Hotspot Map' && (
           <>
-            <MapView demands={demands} onSelect={openDemand} />
+            <MapView demands={demands} onSelect={openDemand}
+                     center={constituencies.find(x => x.code === con)} />
             <div style={{ display: 'flex', gap: 14, marginTop: 14, alignItems: 'flex-start' }}>
               <div style={{ flex: 1 }}>
                 {demands.length === 0 && <div className="card muted">No demands yet.</div>}

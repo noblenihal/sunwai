@@ -13,8 +13,8 @@ from sqlalchemy.orm import Session
 from ..config import settings
 from . import clustering
 
-EXTRACTION_PROMPT = """You are structuring a citizen's development request for an MP's office
-in the South Delhi constituency. Input may be in any Indian language, as text,
+EXTRACTION_PROMPT = """You are structuring a citizen's development request for an
+Indian MP's office. Input may be in any Indian language, as text,
 a voice note, or a photo of a civic issue.
 
 - If audio: transcribe it in the original language into `transcript`.

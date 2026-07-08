@@ -7,16 +7,26 @@ from ..db import get_db
 router = APIRouter(tags=["demands"])
 
 
+@router.get("/constituencies")
+def constituencies(db: Session = Depends(get_db)):
+    rows = db.execute(
+        text("SELECT code, name, state, lat, lon FROM constituencies ORDER BY name")
+    ).mappings().all()
+    return {"constituencies": [dict(r) for r in rows]}
+
+
 @router.get("/demands")
-def list_demands(db: Session = Depends(get_db)):
+def list_demands(c: str = "south-delhi", db: Session = Depends(get_db)):
     """Clustered demands with counts — feeds the hotspot map (F3)."""
     rows = db.execute(
         text(
             "SELECT d.id, d.title, d.category, d.ward_code, d.signal_count, "
             "       d.trend_7d, w.lat, w.lon "
             "FROM demands d LEFT JOIN wards w USING (ward_code) "
+            "WHERE d.constituency = :c "
             "ORDER BY d.signal_count DESC"
-        )
+        ),
+        {"c": c},
     ).mappings().all()
     return {"demands": [dict(r) for r in rows]}
 

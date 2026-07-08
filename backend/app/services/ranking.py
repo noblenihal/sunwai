@@ -90,24 +90,31 @@ def _generate_justification(prompt: str) -> str | None:
 
 def rerank_all(db: Session) -> int:
     _refresh_trends(db)
-    demands = db.execute(text("SELECT id, signal_count, trend_7d FROM demands")).mappings().all()
-    scored = []
+    demands = db.execute(
+        text("SELECT id, signal_count, trend_7d, constituency FROM demands")
+    ).mappings().all()
+    by_constituency: dict[str, list] = {}
     for d in demands:
         ev = evidence.evidence_for(db, d["id"])
         gap_weight = 1 + ev.get("gap_score", 0.5 if ev.get("available") else 0.0)
         score = d["signal_count"] * (1 + (d["trend_7d"] or 0)) * gap_weight
-        scored.append((d["id"], score, gap_weight, ev))
-
-    scored.sort(key=lambda t: t[1], reverse=True)
-    for rank, (demand_id, score, gap_weight, ev) in enumerate(scored, start=1):
-        ev["gap_weight"] = gap_weight
-        db.execute(
-            text(
-                "UPDATE demands SET score = :score, rank = :rank, evidence = :ev "
-                "WHERE id = :id"
-            ),
-            {"id": demand_id, "score": score, "rank": rank, "ev": json.dumps(ev)},
+        by_constituency.setdefault(d["constituency"] or "south-delhi", []).append(
+            (d["id"], score, gap_weight, ev)
         )
+
+    total = 0
+    for scored in by_constituency.values():  # rank is per-constituency
+        scored.sort(key=lambda t: t[1], reverse=True)
+        for rank, (demand_id, score, gap_weight, ev) in enumerate(scored, start=1):
+            ev["gap_weight"] = gap_weight
+            db.execute(
+                text(
+                    "UPDATE demands SET score = :score, rank = :rank, evidence = :ev "
+                    "WHERE id = :id"
+                ),
+                {"id": demand_id, "score": score, "rank": rank, "ev": json.dumps(ev)},
+            )
+            total += 1
     db.commit()
 
     # justifications for the top N — skipped when the cache key is unchanged
@@ -141,4 +148,4 @@ def rerank_all(db: Session) -> int:
         if generated:
             print(f"[ranking] generated {generated} justifications")
 
-    return len(scored)
+    return total

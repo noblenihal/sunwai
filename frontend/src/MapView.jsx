@@ -22,22 +22,27 @@ function loadMaps() {
   return mapsPromise
 }
 
-export default function MapView({ demands, onSelect }) {
+export default function MapView({ demands, onSelect, center }) {
   const divRef = useRef(null)
   const mapRef = useRef(null)
   const circlesRef = useRef([])
   const [failed, setFailed] = useState(!KEY)
+  const ctr = center ? { lat: center.lat, lng: center.lon } : CENTER
 
   useEffect(() => {
     loadMaps()
       .then(maps => {
         if (!divRef.current || mapRef.current) return
         mapRef.current = new maps.Map(divRef.current, {
-          center: CENTER, zoom: 13, mapTypeControl: false, streetViewControl: false,
+          center: ctr, zoom: 13, mapTypeControl: false, streetViewControl: false,
         })
       })
       .catch(() => setFailed(true))
   }, [])
+
+  useEffect(() => {
+    if (mapRef.current) mapRef.current.setCenter(ctr)
+  }, [ctr.lat, ctr.lng])
 
   useEffect(() => {
     const maps = window.google?.maps
@@ -60,12 +65,12 @@ export default function MapView({ demands, onSelect }) {
       })
   }, [demands])
 
-  if (failed) return <OsmMap demands={demands} onSelect={onSelect} />
+  if (failed) return <OsmMap demands={demands} onSelect={onSelect} center={ctr} />
   return <div ref={divRef} style={{ height: '52vh', borderRadius: 12, border: '1px solid #e3e8f0' }} />
 }
 
 // Fallback: Leaflet + OpenStreetMap — no key, no billing, no Google dependency
-function OsmMap({ demands, onSelect }) {
+function OsmMap({ demands, onSelect, center }) {
   const divRef = useRef(null)
   const mapRef = useRef(null)
   const circlesRef = useRef([])
@@ -74,12 +79,16 @@ function OsmMap({ demands, onSelect }) {
     Promise.all([import('leaflet'), import('leaflet/dist/leaflet.css')]).then(([mod]) => {
       const L = mod.default || mod
       if (!divRef.current || mapRef.current) return
-      mapRef.current = L.map(divRef.current).setView([CENTER.lat, CENTER.lng], 13)
+      mapRef.current = L.map(divRef.current).setView([center.lat, center.lng], 13)
       L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap contributors',
       }).addTo(mapRef.current)
     })
   }, [])
+
+  useEffect(() => {
+    if (mapRef.current) mapRef.current.setView([center.lat, center.lng], 13)
+  }, [center.lat, center.lng])
 
   useEffect(() => {
     import('leaflet').then(mod => {
