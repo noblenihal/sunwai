@@ -29,7 +29,10 @@ services:
     restart: unless-stopped
 
   web:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        VITE_MAPS_API_KEY: ${VITE_MAPS_API_KEY:-}
     depends_on:
       - api
     ports:

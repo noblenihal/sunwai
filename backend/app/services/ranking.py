@@ -13,7 +13,26 @@ from ..config import settings
 from . import evidence
 
 
+def _refresh_trends(db: Session) -> None:
+    """trend_7d = (signals last 7d − prior 7d) / max(prior 7d, 1), per demand."""
+    db.execute(
+        text(
+            "UPDATE demands d SET trend_7d = t.trend FROM ("
+            "  SELECT demand_id,"
+            "         (count(*) FILTER (WHERE created_at >= now() - interval '7 days')"
+            "          - count(*) FILTER (WHERE created_at >= now() - interval '14 days'"
+            "                              AND created_at < now() - interval '7 days'))::real"
+            "         / GREATEST(count(*) FILTER (WHERE created_at >= now() - interval '14 days'"
+            "                              AND created_at < now() - interval '7 days'), 1) AS trend"
+            "  FROM demand_signals WHERE demand_id IS NOT NULL GROUP BY demand_id"
+            ") t WHERE d.id = t.demand_id"
+        )
+    )
+    db.commit()
+
+
 def rerank_all(db: Session) -> int:
+    _refresh_trends(db)
     demands = db.execute(text("SELECT id, signal_count, trend_7d FROM demands")).mappings().all()
     scored = []
     for d in demands:
