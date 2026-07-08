@@ -116,6 +116,24 @@ def _extract_with_gemini(raw_text: str, media_url: str | None = None) -> dict:
         raise
 
 
+def transcribe_short(media_url: str) -> str:
+    """One cheap Gemini call to transcribe a short clarification voice note."""
+    from google import genai
+    from google.genai import types
+
+    data, mime = _load_media(media_url)
+    client = genai.Client(api_key=settings.gemini_api_key)
+    resp = client.models.generate_content(
+        model=settings.structuring_model,
+        contents=[
+            "Transcribe this short audio exactly as spoken (it is likely an "
+            "Indian place/colony name). Return ONLY the transcription.",
+            types.Part.from_bytes(data=data, mime_type=mime),
+        ],
+    )
+    return (resp.text or "").strip()
+
+
 def _embed(summary_en: str) -> list[float] | None:
     from google import genai
 

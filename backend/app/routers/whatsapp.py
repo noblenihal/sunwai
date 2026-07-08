@@ -1,13 +1,15 @@
 """F1 — WhatsApp intake via Twilio Sandbox webhook.
 
-Twilio POSTs application/x-www-form-urlencoded on each inbound message:
-From (whatsapp:+91...), Body, NumMedia, MediaUrl0, MediaContentType0,
-MessageSid. We store a submission, run the pipeline synchronously (Gemini
-~2-4s, well inside Twilio's 15s timeout) and reply with TwiML — no REST
-client or outbound auth needed. Legacy Meta-handshake route kept for
-compatibility.
+Twilio POSTs form-encoded fields per inbound message (From, Body, NumMedia,
+MediaUrl0, MediaContentType0, MessageSid). We store a submission, run the
+pipeline synchronously and reply with TwiML — formatted for WhatsApp
+(*bold*, line breaks) in the citizen's own language.
+
+Clarification loop: while a "which area?" question is pending, a short text
+OR a short voice note from the same sender is treated as the answer.
 """
 import hashlib
+from xml.sax.saxutils import escape
 
 from fastapi import APIRouter, Depends, Query, Request, Response
 from sqlalchemy import text as sql
@@ -24,24 +26,81 @@ CATEGORY_HI = {
     "drainage": "नाली", "electricity": "बिजली", "other": "अन्य",
 }
 
+L10N = {
+    "en": {
+        "recorded": "✅ *Recorded* — {cat}\n📌 Ref: #S{id}",
+        "reach": "Your voice will reach the MP's office.",
+        "ask_loc": "📍 Which area/colony is this about?\nPlease send the area name (text or voice).",
+        "loc_noted": "✅ *Location noted:* {ward}\n📌 Ref: #S{id}",
+        "not_req": "This didn't look like a civic complaint or suggestion.\nPlease describe your issue — by voice, photo or text.",
+    },
+    "hi": {
+        "recorded": "✅ *दर्ज हुआ* — {cat}\n📌 संदर्भ: #S{id}",
+        "reach": "आपकी बात सांसद कार्यालय तक पहुंचेगी।",
+        "ask_loc": "📍 यह किस इलाके/कॉलोनी की बात है?\nइलाके का नाम भेजें (लिखकर या बोलकर)।",
+        "loc_noted": "✅ *स्थान दर्ज:* {ward}\n📌 संदर्भ: #S{id}",
+        "not_req": "यह किसी समस्या या सुझाव जैसा नहीं लगा।\nकृपया अपनी समस्या बताएं — आवाज़, फोटो या लिखकर।",
+    },
+    "bn": {
+        "recorded": "✅ *নথিভুক্ত হয়েছে* — {cat}\n📌 রেফারেন্স: #S{id}",
+        "reach": "আপনার কথা সাংসদের অফিসে পৌঁছাবে।",
+        "ask_loc": "📍 এটি কোন এলাকার সমস্যা?\nএলাকার নাম পাঠান (লিখে বা বলে)।",
+        "loc_noted": "✅ *এলাকা নথিভুক্ত:* {ward}\n📌 রেফারেন্স: #S{id}",
+        "not_req": "এটি কোনো সমস্যা বা পরামর্শ বলে মনে হয়নি।\nদয়া করে আপনার সমস্যা জানান — ভয়েস, ছবি বা লিখে।",
+    },
+    "gu": {
+        "recorded": "✅ *નોંધાયું* — {cat}\n📌 સંદર્ભ: #S{id}",
+        "reach": "તમારી વાત સાંસદની ઑફિસ સુધી પહોંચશે.",
+        "ask_loc": "📍 આ કયા વિસ્તાર/કૉલોનીની વાત છે?\nવિસ્તારનું નામ મોકલો (લખીને કે બોલીને).",
+        "loc_noted": "✅ *સ્થળ નોંધાયું:* {ward}\n📌 સંદર્ભ: #S{id}",
+        "not_req": "આ કોઈ સમસ્યા કે સૂચન જેવું લાગ્યું નહીં.\nકૃપા કરીને તમારી સમસ્યા જણાવો — અવાજ, ફોટો કે લખીને.",
+    },
+    "mr": {
+        "recorded": "✅ *नोंदवले* — {cat}\n📌 संदर्भ: #S{id}",
+        "reach": "तुमचे म्हणणे खासदार कार्यालयापर्यंत पोहोचेल.",
+        "ask_loc": "📍 हे कोणत्या भागाबद्दल आहे?\nभागाचे/कॉलनीचे नाव पाठवा (लिहून किंवा बोलून).",
+        "loc_noted": "✅ *ठिकाण नोंदवले:* {ward}\n📌 संदर्भ: #S{id}",
+        "not_req": "हे समस्येसारखे किंवा सूचनेसारखे वाटले नाही.\nकृपया तुमची समस्या सांगा — आवाज, फोटो किंवा लिहून.",
+    },
+    "ta": {
+        "recorded": "✅ *பதிவு செய்யப்பட்டது* — {cat}\n📌 குறிப்பு: #S{id}",
+        "reach": "உங்கள் குரல் எம்.பி. அலுவலகத்தை சென்றடையும்.",
+        "ask_loc": "📍 இது எந்த பகுதி/காலனி பற்றியது?\nபகுதியின் பெயரை அனுப்பவும் (எழுத்து அல்லது குரல்).",
+        "loc_noted": "✅ *இடம் பதிவானது:* {ward}\n📌 குறிப்பு: #S{id}",
+        "not_req": "இது புகார் அல்லது பரிந்துரையாகத் தெரியவில்லை.\nஉங்கள் பிரச்சனையை கூறவும் — குரல், புகைப்படம் அல்லது எழுத்தில்.",
+    },
+}
+
+_LANG_KEYS = {"hindi": "hi", "bengali": "bn", "bangla": "bn", "gujarati": "gu",
+              "marathi": "mr", "tamil": "ta"}
+
+
+def _lang(code_or_name: str | None) -> str:
+    s = (code_or_name or "").lower()
+    if s[:2] in L10N:
+        return s[:2]
+    for name, code in _LANG_KEYS.items():
+        if name in s:
+            return code
+    return "en"
+
+
+def _t(lang: str, key: str, **kw) -> str:
+    return L10N.get(lang, L10N["en"])[key].format(**kw)
+
+
+def _cat_label(lang: str, cat: str) -> str:
+    if lang == "hi":
+        return f"{CATEGORY_HI.get(cat, cat)} ({cat})"
+    return cat
+
 
 def _twiml(message: str) -> Response:
     xml = (
         '<?xml version="1.0" encoding="UTF-8"?>'
-        f"<Response><Message>{message}</Message></Response>"
+        f"<Response><Message>{escape(message)}</Message></Response>"
     )
     return Response(content=xml, media_type="application/xml")
-
-
-ASK_LOCATION = (
-    "यह किस इलाके/कॉलोनी की बात है? कृपया इलाके का नाम भेजें। "
-    "(Which area/colony is this about? Please send the area name.)"
-)
-NOT_A_REQUEST = (
-    "यह किसी समस्या या सुझाव जैसा नहीं लगा। कृपया अपनी समस्या बताएं — "
-    "आवाज़, फोटो या लिखकर। (This didn't look like a civic complaint or "
-    "suggestion — please describe your issue by voice, photo or text.)"
-)
 
 
 def _ward_name(db: Session, ward_code: str) -> str:
@@ -51,14 +110,13 @@ def _ward_name(db: Session, ward_code: str) -> str:
     return row[0] if row else ward_code
 
 
-def _handle_clarification(db: Session, sender_hash: str, body: str) -> str | None:
-    """If this sender owes us a location and sent a short text, treat it as
-    the answer. Returns a reply, or None to fall through to normal intake."""
-    if not body or len(body) > 60:
-        return None
+def _handle_clarification(db: Session, sender_hash: str, body: str,
+                          media_url: str | None, media_type: str) -> str | None:
+    """If this sender owes us a location: short text OR a short voice note is
+    treated as the answer. Returns a reply, or None to fall through."""
     pending = db.execute(
         sql(
-            "SELECT s.id AS submission_id, ds.id AS signal_id "
+            "SELECT s.id AS submission_id, s.language, ds.id AS signal_id "
             "FROM submissions s JOIN demand_signals ds ON ds.submission_id = s.id "
             "WHERE s.sender_hash = :sh AND s.pending_clarification = 'location' "
             "AND s.received_at > now() - interval '24 hours' "
@@ -69,12 +127,25 @@ def _handle_clarification(db: Session, sender_hash: str, body: str) -> str | Non
     if not pending:
         return None
 
+    answer = None
+    if body and len(body) <= 60:
+        answer = body
+    elif media_url and media_type.startswith("audio") and settings.gemini_api_key:
+        try:
+            transcript = structuring.transcribe_short(media_url)
+            if transcript and len(transcript) <= 80:
+                answer = transcript
+        except Exception as exc:
+            print(f"[whatsapp] clarification transcribe failed: {exc.__class__.__name__}")
+    if not answer:
+        return None
+
     # one shot: clear the flag either way so we never loop
     db.execute(
         sql("UPDATE submissions SET pending_clarification = NULL WHERE id = :id"),
         {"id": pending["submission_id"]},
     )
-    ward = structuring._resolve_ward(db, body)
+    ward = structuring._resolve_ward(db, answer)
     if not ward:
         db.commit()
         return None  # not a recognizable area — treat message as new intake
@@ -84,14 +155,12 @@ def _handle_clarification(db: Session, sender_hash: str, body: str) -> str | Non
             "UPDATE demand_signals SET ward_code = :w, location_text = :loc "
             "WHERE id = :id"
         ),
-        {"w": ward, "loc": body, "id": pending["signal_id"]},
+        {"w": ward, "loc": answer, "id": pending["signal_id"]},
     )
     db.commit()
     clustering.reassign(db, pending["signal_id"])
-    return (
-        f"✓ स्थान दर्ज / Location noted: {_ward_name(db, ward)}. "
-        f"संदर्भ / Ref #S{pending['submission_id']}."
-    )
+    return _t(_lang(pending["language"]), "loc_noted",
+              ward=_ward_name(db, ward), id=pending["submission_id"])
 
 
 @router.post("/whatsapp/webhook")
@@ -112,14 +181,19 @@ async def receive(request: Request, db: Session = Depends(get_db)):
         sql("SELECT id FROM submissions WHERE wa_sid = :sid"), {"sid": sid}
     ).first()
     if dup:
-        return _twiml("✓ पहले से दर्ज / already recorded")
+        return _twiml("✅")
 
     sender_hash = hashlib.sha256(sender.encode()).hexdigest()[:16]
 
-    if not media_url:
-        clarified = _handle_clarification(db, sender_hash, body)
-        if clarified:
-            return _twiml(clarified)
+    clarified = _handle_clarification(db, sender_hash, body, media_url, media_type)
+    if clarified:
+        db.execute(
+            sql("INSERT INTO submissions (channel, sender_hash, kind, raw_text, wa_sid, processed_at) "
+                "VALUES ('whatsapp', :sh, 'clarification', :body, :sid, now())"),
+            {"sh": sender_hash, "body": body or "(voice answer)", "sid": sid},
+        )
+        db.commit()
+        return _twiml(clarified)
 
     kind = "text"
     if media_type.startswith("audio"):
@@ -140,31 +214,25 @@ async def receive(request: Request, db: Session = Depends(get_db)):
 
     try:
         signal = structuring.process_submission(db, submission_id)
+        lang = _lang(signal.get("language"))
         if signal.get("rejected"):
-            return _twiml(NOT_A_REQUEST)
-        cat = signal.get("category", "other")
-        confirmation = (
-            f"✓ दर्ज हुआ / Recorded — {CATEGORY_HI.get(cat, cat)} ({cat}). "
-            f"संदर्भ / Ref #S{submission_id}."
-        )
+            return _twiml(_t(lang, "not_req"))
+        recorded = _t(lang, "recorded",
+                      cat=_cat_label(lang, signal.get("category", "other")),
+                      id=submission_id)
         if signal.get("ward_code"):
-            reply = (
-                f"{confirmation} स्थान: {_ward_name(db, signal['ward_code'])}. "
-                "आपकी बात सांसद कार्यालय तक पहुंचेगी।"
-            )
+            reply = (f"{recorded}\n📍 {_ward_name(db, signal['ward_code'])}\n\n"
+                     f"{_t(lang, 'reach')}")
         else:
             db.execute(
                 sql("UPDATE submissions SET pending_clarification = 'location' WHERE id = :id"),
                 {"id": submission_id},
             )
             db.commit()
-            reply = f"{confirmation} {ASK_LOCATION}"
+            reply = f"{recorded}\n\n{_t(lang, 'ask_loc')}"
     except Exception as exc:
         print(f"[whatsapp] pipeline failed for {submission_id}: {exc.__class__.__name__}: {exc}")
-        reply = (
-            f"✓ दर्ज हुआ / Recorded. संदर्भ / Ref #S{submission_id}. "
-            "(processing queued)"
-        )
+        reply = f"✅ Recorded — Ref #S{submission_id} (processing queued)"
     return _twiml(reply)
 
 
