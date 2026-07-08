@@ -60,13 +60,46 @@ export default function MapView({ demands, onSelect }) {
       })
   }, [demands])
 
-  if (failed) {
-    return (
-      <div className="card muted">
-        Map unavailable (Maps key missing or billing not enabled on the Google
-        project). Demand list below still works.
-      </div>
-    )
-  }
+  if (failed) return <OsmMap demands={demands} onSelect={onSelect} />
+  return <div ref={divRef} style={{ height: '52vh', borderRadius: 12, border: '1px solid #e3e8f0' }} />
+}
+
+// Fallback: Leaflet + OpenStreetMap — no key, no billing, no Google dependency
+function OsmMap({ demands, onSelect }) {
+  const divRef = useRef(null)
+  const mapRef = useRef(null)
+  const circlesRef = useRef([])
+
+  useEffect(() => {
+    Promise.all([import('leaflet'), import('leaflet/dist/leaflet.css')]).then(([mod]) => {
+      const L = mod.default || mod
+      if (!divRef.current || mapRef.current) return
+      mapRef.current = L.map(divRef.current).setView([CENTER.lat, CENTER.lng], 13)
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
+      }).addTo(mapRef.current)
+    })
+  }, [])
+
+  useEffect(() => {
+    import('leaflet').then(mod => {
+      const L = mod.default || mod
+      if (!mapRef.current) return
+      circlesRef.current.forEach(c => c.remove())
+      circlesRef.current = demands
+        .filter(d => d.lat && d.lon)
+        .map(d => {
+          const color = CATEGORY_COLORS[d.category] || CATEGORY_COLORS.other
+          const circle = L.circle([d.lat, d.lon], {
+            radius: 150 + Math.sqrt(d.signal_count) * 120,
+            color, fillColor: color, fillOpacity: 0.35, weight: 1.5,
+          })
+          circle.on('click', () => onSelect(d.id))
+          circle.addTo(mapRef.current)
+          return circle
+        })
+    })
+  }, [demands])
+
   return <div ref={divRef} style={{ height: '52vh', borderRadius: 12, border: '1px solid #e3e8f0' }} />
 }
