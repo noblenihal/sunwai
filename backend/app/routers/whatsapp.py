@@ -89,6 +89,16 @@ def _t(lang: str, key: str, **kw) -> str:
     return L10N.get(lang, L10N["en"])[key].format(**kw)
 
 
+def _compose(lang: str, local_parts: list[str], en_parts: list[str]) -> str:
+    """Local language leads; English follows as one italic line (skipped when
+    the local language IS English)."""
+    local = "\n\n".join(p for p in local_parts if p)
+    if lang == "en":
+        return local
+    en = " ".join(p.replace("\n", " ").replace("*", "") for p in en_parts if p)
+    return f"{local}\n\n_{en}_"
+
+
 def _cat_label(lang: str, cat: str) -> str:
     if lang == "hi":
         return f"{CATEGORY_HI.get(cat, cat)} ({cat})"
@@ -159,8 +169,9 @@ def _handle_clarification(db: Session, sender_hash: str, body: str,
     )
     db.commit()
     clustering.reassign(db, pending["signal_id"])
-    return _t(_lang(pending["language"]), "loc_noted",
-              ward=_ward_name(db, ward), id=pending["submission_id"])
+    lang = _lang(pending["language"])
+    kw = {"ward": _ward_name(db, ward), "id": pending["submission_id"]}
+    return _compose(lang, [_t(lang, "loc_noted", **kw)], [_t("en", "loc_noted", **kw)])
 
 
 @router.post("/whatsapp/webhook")
@@ -216,20 +227,28 @@ async def receive(request: Request, db: Session = Depends(get_db)):
         signal = structuring.process_submission(db, submission_id)
         lang = _lang(signal.get("language"))
         if signal.get("rejected"):
-            return _twiml(_t(lang, "not_req"))
-        recorded = _t(lang, "recorded",
-                      cat=_cat_label(lang, signal.get("category", "other")),
-                      id=submission_id)
+            return _twiml(_compose(lang, [_t(lang, "not_req")], [_t("en", "not_req")]))
+        kw = {"cat": _cat_label(lang, signal.get("category", "other")), "id": submission_id}
+        en_kw = {"cat": signal.get("category", "other"), "id": submission_id}
+        recorded = _t(lang, "recorded", **kw)
         if signal.get("ward_code"):
-            reply = (f"{recorded}\n📍 {_ward_name(db, signal['ward_code'])}\n\n"
-                     f"{_t(lang, 'reach')}")
+            ward_line = f"📍 {_ward_name(db, signal['ward_code'])}"
+            reply = _compose(
+                lang,
+                [recorded, ward_line, _t(lang, "reach")],
+                [_t("en", "recorded", **en_kw), ward_line, _t("en", "reach")],
+            )
         else:
             db.execute(
                 sql("UPDATE submissions SET pending_clarification = 'location' WHERE id = :id"),
                 {"id": submission_id},
             )
             db.commit()
-            reply = f"{recorded}\n\n{_t(lang, 'ask_loc')}"
+            reply = _compose(
+                lang,
+                [recorded, _t(lang, "ask_loc")],
+                [_t("en", "recorded", **en_kw), _t("en", "ask_loc")],
+            )
     except Exception as exc:
         print(f"[whatsapp] pipeline failed for {submission_id}: {exc.__class__.__name__}: {exc}")
         reply = f"✅ Recorded — Ref #S{submission_id} (processing queued)"
