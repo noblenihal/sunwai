@@ -7,10 +7,25 @@ evidence, not just volume.
 **Status:** `wards` table + `evidence_for()` service exist
 (`backend/app/services/evidence.py`); no data loaded yet.
 
-## Prerequisites
+## Pilot geography (DECIDED 2026-07-08)
 
-- [ ] **Pick the constituency** (blocker for everything here — pick one you
-      know personally; you'll narrate it on stage)
+**South Delhi Parliamentary Constituency (PC-7), demo focus on the
+Kalkaji assembly segment (AC-51) centered on Govindpuri.**
+
+- Ward unit = MCD ward. Core set (~15–20 wards): Govind Puri, Kalkaji,
+  Chittaranjan Park, Tughlakabad Ext, and surrounding wards of the
+  Kalkaji–Tughlakabad–Badarpur–Ambedkar Nagar–Sangam Vihar belt.
+- Pitch framing: "piloted on one assembly segment of an MP's constituency;
+  the other nine segments are a config change."
+- Why it demos well: dense urban mix (planned colonies + unauthorized
+  colonies + JJ clusters side by side) → sharp contrasts for the evidence
+  and silent-needs views; water/drainage/sanitation demands are real and
+  recognizable to a Delhi judging panel.
+- Data sources: Census 2011 Delhi ward PCA; UDISE+ South East Delhi
+  district; Delhi govt dispensary/Mohalla-clinic list; MCD ward list
+  (DDA Appendix I has the full ward name/number table).
+
+## Prerequisites
 - [ ] Download extracts:
       - Census 2011 PCA (village/ward level) — data.gov.in or
         censusindia.gov.in; columns: population, SC/ST population, literacy
