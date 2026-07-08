@@ -48,7 +48,7 @@ Google Maps (OSM fallback) · Docker Compose on one 2GB VM · GitHub Actions CD.
 
 ## How to test (no setup)
 
-1. **WhatsApp**: send `join <code>` to **+1 415 523 8886**, then a voice
+1. **WhatsApp**: send `join mistake-won` to **+1 415 523 8886**, then a voice
    note in any Indian language. No location? The bot asks — answer by voice.
 2. Open the [dashboard](http://168.144.24.204:8082/app): your demand appears
    on the map in ~10s. Click it → *View Originals* for citizens' real words.

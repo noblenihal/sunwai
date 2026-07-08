@@ -76,7 +76,7 @@ to MLA constituencies and municipal wards.
 
 ## How to test (2 minutes, no setup)
 
-1. **Try the WhatsApp bot from your own phone**: send `join <code>` to
+1. **Try the WhatsApp bot from your own phone**: send `join mistake-won` to
    **+1 415 523 8886** (Twilio sandbox), then send a voice note in any
    Indian language — e.g. *"हमारी गली में स्ट्रीट लाइट खराब है"*. You'll get
    a reply in your language with a reference number. Skip the location and
