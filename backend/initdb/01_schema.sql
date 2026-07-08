@@ -45,6 +45,8 @@ CREATE TABLE demands (
     rank          INT,
     justification TEXT,                 -- Gemini-written "why"
     justification_key TEXT,             -- input hash; unchanged inputs skip the LLM call
+    status        TEXT NOT NULL DEFAULT 'open',  -- open | in_progress | resolved
+    resolved_at   TIMESTAMPTZ,
     updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

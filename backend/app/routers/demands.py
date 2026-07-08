@@ -1,10 +1,13 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from ..db import get_db
 
 router = APIRouter(tags=["demands"])
+
+STATUSES = ("open", "in_progress", "resolved")
 
 
 @router.get("/constituencies")
@@ -21,7 +24,7 @@ def list_demands(c: str = "south-delhi", db: Session = Depends(get_db)):
     rows = db.execute(
         text(
             "SELECT d.id, d.title, d.category, d.ward_code, d.signal_count, "
-            "       d.trend_7d, w.lat, w.lon "
+            "       d.trend_7d, d.status, w.lat, w.lon "
             "FROM demands d LEFT JOIN wards w USING (ward_code) "
             "WHERE d.constituency = :c "
             "ORDER BY d.signal_count DESC"
@@ -29,6 +32,50 @@ def list_demands(c: str = "south-delhi", db: Session = Depends(get_db)):
         {"c": c},
     ).mappings().all()
     return {"demands": [dict(r) for r in rows]}
+
+
+class StatusBody(BaseModel):
+    status: str
+
+
+@router.post("/demands/{demand_id}/status")
+def set_status(demand_id: int, body: StatusBody, db: Session = Depends(get_db)):
+    """MP-office action: move a demand through open → in_progress → resolved.
+    (Auth is a production concern — the pilot dashboard is office-internal.)"""
+    if body.status not in STATUSES:
+        raise HTTPException(status_code=422, detail=f"status must be one of {STATUSES}")
+    updated = db.execute(
+        text(
+            "UPDATE demands SET status = :s, "
+            "resolved_at = CASE WHEN :s = 'resolved' THEN now() ELSE NULL END "
+            "WHERE id = :id RETURNING id"
+        ),
+        {"s": body.status, "id": demand_id},
+    ).first()
+    db.commit()
+    if not updated:
+        raise HTTPException(status_code=404, detail="demand not found")
+    return {"id": demand_id, "status": body.status}
+
+
+@router.get("/public/board")
+def public_board(c: str = "south-delhi", db: Session = Depends(get_db)):
+    """Citizen-facing transparency board: what's raised, what's resolved."""
+    rows = db.execute(
+        text(
+            "SELECT d.id, d.title, d.category, d.status, d.signal_count, "
+            "       d.resolved_at::date::text AS resolved_on, w.name AS ward_name "
+            "FROM demands d LEFT JOIN wards w USING (ward_code) "
+            "WHERE d.constituency = :c "
+            "ORDER BY (d.status = 'resolved'), d.signal_count DESC"
+        ),
+        {"c": c},
+    ).mappings().all()
+    items = [dict(r) for r in rows]
+    return {
+        "open": [i for i in items if i["status"] != "resolved"],
+        "resolved": [i for i in items if i["status"] == "resolved"],
+    }
 
 
 @router.get("/demands/{demand_id}")

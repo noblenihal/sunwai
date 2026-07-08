@@ -14,7 +14,7 @@ def ranked_works(c: str = "south-delhi", db: Session = Depends(get_db)):
     rows = db.execute(
         text(
             "SELECT id, rank, title, category, ward_code, signal_count, "
-            "       trend_7d, score, evidence, justification "
+            "       trend_7d, score, evidence, justification, status "
             "FROM demands WHERE rank IS NOT NULL AND constituency = :c ORDER BY rank"
         ),
         {"c": c},
