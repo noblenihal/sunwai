@@ -7,13 +7,22 @@ meeting — and the proof for the "non-technical office understands it in
 
 **Status:** not started. Build after F5 (needs ranks + justifications).
 
+## Approach decision (2026-07-08)
+
+Primary: **print-styled HTML route + browser "Save as PDF"** — zero new
+dependencies (matters on the 2GB droplet). The button opens
+`/brief` (print CSS, `@page` size A4) and triggers `window.print()`;
+the office gets a PDF via the browser's native dialog, and the demo
+flourish is identical. Server-side weasyprint (~+150MB image, native pango
+libs, more RAM) is the fallback ONLY if judges/organizers require a raw
+`.pdf` download link.
+
 ## Prerequisites
 
 - [ ] F5 complete (ranked works with justifications)
-- [ ] Add `weasyprint` to `backend/requirements.txt` (pure-Python
-      HTML→PDF; needs `libpango` etc. — add
-      `apt-get install -y libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf-2.0-0`
-      to `backend/Dockerfile`). Test image size stays acceptable (~+150MB).
+- [ ] (fallback path only) `weasyprint` in `backend/requirements.txt` +
+      `apt-get install -y libpango-1.0-0 libpangocairo-1.0-0
+      libgdk-pixbuf-2.0-0 fonts-noto` in `backend/Dockerfile`
 
 ## Step-by-step
 
