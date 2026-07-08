@@ -33,11 +33,16 @@ def evidence_for(db: Session, demand_id: int) -> dict:
 
     gap_score = 0.5 + min(sc, 0.5) + (0.5 if deficit else 0.0)
 
-    facts = [
-        f"Ward population {row['population']:,} (Census 2011; SEC Delimitation 2022, ward {ind.get('ward_no')})",
-        f"SC population share {sc:.1%} ({ind.get('sc_population'):,} residents)",
-        f"Colony profile: {ind.get('colony_profile')}",
-    ]
+    facts = []
+    if row["population"]:
+        src = f"Census 2011; SEC Delimitation 2022, ward {ind['ward_no']}" \
+            if ind.get("ward_no") else ind.get("source", "estimate")
+        facts.append(f"Ward population {row['population']:,} ({src})")
+    if row["sc_st_share"] is not None:
+        sc_pop = f" ({ind['sc_population']:,} residents)" if ind.get("sc_population") else ""
+        facts.append(f"SC population share {sc:.1%}{sc_pop}")
+    if ind.get("colony_profile"):
+        facts.append(f"Colony profile: {ind['colony_profile']}")
     return {
         "available": True,
         "population": row["population"],

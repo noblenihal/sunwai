@@ -25,6 +25,7 @@ export default function Landing() {
         </div>
         <span className="spacer" />
         <nav className="landing-nav">
+          <a href="#how-to-use" className="nav-link">How to use</a>
           <a href="/board" className="nav-link">Public Board</a>
           <a href="https://github.com/noblenihal/sunwai" target="_blank" rel="noreferrer" className="nav-link">GitHub</a>
           <a className="btn-primary" href="/app">Open MP Dashboard</a>
@@ -121,6 +122,44 @@ export default function Landing() {
               <div className="step-no">04</div>
               <h3>Act</h3>
               <p>The office works a ranked list with written justifications; the public board shows what's raised, in progress, and resolved.</p>
+            </div>
+          </div>
+        </section>
+
+        {/* How to use */}
+        <section className="howto-section" id="how-to-use">
+          <h2 className="section-title">How to use Sunwai</h2>
+          <div className="howto-grid">
+            <div className="howto-card howto-public">
+              <div className="howto-head">
+                <span className="howto-icon">🙋</span>
+                <div>
+                  <h3>I'm a resident</h3>
+                  <p className="howto-sub">Report an issue from your street — 30 seconds, no app.</p>
+                </div>
+              </div>
+              <ol className="howto-steps">
+                <li><b>Message the Sunwai WhatsApp number.</b> Voice note, photo, or text — in your own language.</li>
+                <li><b>Say what and where.</b> "The drain in Govindpuri Street 4 is blocked." If you forget the place, the bot asks — you can answer by voice.</li>
+                <li><b>Get your reference number.</b> Instant reply: ✅ Recorded — Ref #S48.</li>
+                <li><b>Track it publicly.</b> Your issue joins the <a href="/board">Public Board</a> — see it move from <i>being heard</i> to <i>resolved</i>.</li>
+              </ol>
+            </div>
+            <div className="howto-card howto-office">
+              <div className="howto-head">
+                <span className="howto-icon">🏛️</span>
+                <div>
+                  <h3>I'm the MP's office</h3>
+                  <p className="howto-sub">Work a ranked, evidence-backed list — not a mailbag.</p>
+                </div>
+              </div>
+              <ol className="howto-steps">
+                <li><b>Open the <a href="/app">dashboard</a>.</b> The Hotspot Map shows where demand burns, live, ward by ward.</li>
+                <li><b>Read Ranked Works.</b> Every work carries its formula, Census-cited facts, and a written justification you can defend publicly.</li>
+                <li><b>Tune the ranking.</b> Set weights, boost categories, or type priorities in plain language — the AI applies them transparently.</li>
+                <li><b>Check Silent Needs.</b> High-need wards that aren't complaining get flagged for field visits.</li>
+                <li><b>Act and close the loop.</b> Mark works in progress or resolved — the Public Board updates for everyone. Export the one-page MP Brief for the planning meeting.</li>
+              </ol>
             </div>
           </div>
         </section>

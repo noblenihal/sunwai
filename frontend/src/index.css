@@ -421,6 +421,25 @@ textarea:focus, input:focus, select:focus, button:focus-visible, a:focus-visible
 .bento-card h3 { margin-bottom: 6px; font-size: 17px; }
 .bento-card p { font-size: 13.5px; color: var(--ink-soft); }
 
+.howto-section { padding: 40px var(--gutter) 20px; scroll-margin-top: 80px; }
+.howto-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; }
+.howto-card {
+  background: var(--white); border: 1px solid var(--rule); border-radius: 16px;
+  padding: 26px 28px; box-shadow: var(--shadow-1);
+}
+.howto-public { border-top: 4px solid #25a35a; }
+.howto-office { border-top: 4px solid var(--blue); }
+.howto-head { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 16px; }
+.howto-icon { font-size: 26px; line-height: 1.2; }
+.howto-head h3 { font-size: 18px; margin-bottom: 2px; }
+.howto-sub { font-size: 13px; color: var(--ink-faint); }
+.howto-steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 12px; }
+.howto-steps li { font-size: 14px; color: var(--ink-soft); }
+.howto-steps li b { color: var(--ink); }
+.howto-steps li::marker { font-family: 'IBM Plex Mono', monospace; font-weight: 600; color: var(--gold); }
+.howto-steps a { color: var(--blue); font-weight: 600; text-decoration: none; }
+.howto-steps a:hover { text-decoration: underline; }
+
 .highlights-section {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 14px; padding: 26px var(--gutter) 56px;
