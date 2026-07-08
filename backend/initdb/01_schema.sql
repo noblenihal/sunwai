@@ -42,6 +42,7 @@ CREATE TABLE demands (
     score         REAL,
     rank          INT,
     justification TEXT,                 -- Gemini-written "why"
+    justification_key TEXT,             -- input hash; unchanged inputs skip the LLM call
     updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
