@@ -72,7 +72,10 @@ def _load_media(media_url: str) -> tuple[bytes, str]:
     if media_url.startswith(("http://", "https://")):
         import httpx
 
-        return httpx.get(media_url, timeout=30).content, mime
+        resp = httpx.get(media_url, timeout=30, follow_redirects=True)
+        # Twilio media URLs carry no file extension — trust the header
+        header_mime = (resp.headers.get("content-type") or "").split(";")[0].strip()
+        return resp.content, header_mime or mime
     return Path(media_url).read_bytes(), mime
 
 

@@ -39,6 +39,10 @@ export default function App() {
         <span style={{ marginLeft: 'auto' }}>
           api: {health ? `${health.status} · db ${health.database ?? '?'}` : '…'}
         </span>
+        <a href="/api/brief" target="_blank" rel="noreferrer"
+           style={{ background: '#1a53ff', color: '#fff', padding: '7px 14px', borderRadius: 8, fontSize: 13, textDecoration: 'none' }}>
+          Export MP Brief
+        </a>
       </header>
       <nav>
         {TABS.map(t => (
@@ -103,12 +107,21 @@ export default function App() {
         )}
         {tab === 'Silent Needs' && (
           <>
-            <p className="muted">Wards heard from least, alongside their indicators — unheard is not unneeding.</p>
+            <p className="muted">
+              silence = need × (1 − voice): high-need wards that submit least are likely
+              unheard, not unneeding. Wards under 30k population excluded.
+            </p>
             {wards.length === 0 && <div className="card muted">Load ward public data (F4) to activate this view.</div>}
             {wards.map(w => (
               <div className="card" key={w.ward_code}>
                 <strong>{w.name}</strong>
-                <div className="muted">{w.signals} submissions · population {w.population ?? '—'}</div>
+                {w.suggest_visit && <span className="pill" style={{ marginLeft: 8, background: '#fff3e8', color: '#c05717' }}>suggest field visit</span>}
+                <div className="muted">silence score {w.silence_score?.toFixed(2)} · {w.signals} submissions · population {w.population?.toLocaleString()}</div>
+                {w.facts && (
+                  <ul className="muted" style={{ margin: '8px 0 0 18px' }}>
+                    {w.facts.map((f, i) => <li key={i}>{f}</li>)}
+                  </ul>
+                )}
               </div>
             ))}
           </>

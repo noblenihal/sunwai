@@ -10,7 +10,8 @@ CREATE TABLE submissions (
     media_url     TEXT,
     language      TEXT,
     received_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
-    processed_at  TIMESTAMPTZ
+    processed_at  TIMESTAMPTZ,
+    wa_sid        TEXT UNIQUE            -- Twilio MessageSid, dedupes retries
 );
 
 -- one structured signal per submission (Gemini output, stage 1)
