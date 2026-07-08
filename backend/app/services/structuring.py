@@ -72,7 +72,12 @@ def _load_media(media_url: str) -> tuple[bytes, str]:
     if media_url.startswith(("http://", "https://")):
         import httpx
 
-        resp = httpx.get(media_url, timeout=30, follow_redirects=True)
+        # Twilio enforces basic auth on media URLs for new accounts
+        auth = None
+        if "api.twilio.com" in media_url and settings.twilio_auth_token:
+            auth = (settings.twilio_account_sid, settings.twilio_auth_token)
+        resp = httpx.get(media_url, timeout=30, follow_redirects=True, auth=auth)
+        resp.raise_for_status()
         # Twilio media URLs carry no file extension — trust the header
         header_mime = (resp.headers.get("content-type") or "").split(";")[0].strip()
         return resp.content, header_mime or mime

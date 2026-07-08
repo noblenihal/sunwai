@@ -7,6 +7,8 @@ class Settings(BaseSettings):
     whatsapp_verify_token: str = ""
     whatsapp_access_token: str = ""
     whatsapp_phone_number_id: str = ""
+    twilio_account_sid: str = ""
+    twilio_auth_token: str = ""
     demo_inject_token: str = ""
 
     structuring_model: str = "gemini-flash-latest"
