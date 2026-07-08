@@ -88,31 +88,106 @@ def _generate_justification(prompt: str) -> str | None:
         return None
 
 
+DEFAULT_CONFIG = {"trend_weight": 1.0, "evidence_weight": 1.0,
+                  "category_boosts": {}, "directives": ""}
+
+DIRECTIVE_PROMPT = """The MP's office has stated these priorities for ranking
+development works: "{directives}"
+
+Demand: "{title}" · category: {category} · ward: {ward} · {count} citizen submissions.
+
+How strongly do the stated priorities apply to this demand? Return STRICT JSON:
+{{"modifier": <number between 0.8 and 1.25, 1.0 = priorities don't apply>,
+  "note": "<one short sentence explaining the adjustment, or empty if 1.0>"}}"""
+
+
+def load_config(db: Session, constituency: str) -> dict:
+    row = db.execute(
+        text("SELECT trend_weight, evidence_weight, category_boosts, directives "
+             "FROM ranking_config WHERE constituency = :c"),
+        {"c": constituency},
+    ).mappings().first()
+    return dict(row) if row else dict(DEFAULT_CONFIG)
+
+
+def _directive_modifier(db: Session, demand, directives: str) -> tuple[float, str]:
+    key = hashlib.md5(
+        f"{directives}|{demand['id']}|{demand['signal_count']}|{demand['category']}".encode()
+    ).hexdigest()
+    if demand["directive_key"] == key and demand["directive_modifier"]:
+        return demand["directive_modifier"], demand["directive_note"] or ""
+    modifier, note = 1.0, ""
+    try:
+        from google import genai
+
+        client = genai.Client(api_key=settings.gemini_api_key)
+        resp = client.models.generate_content(
+            model=settings.structuring_model,
+            contents=DIRECTIVE_PROMPT.format(
+                directives=directives[:500], title=demand["title"],
+                category=demand["category"], ward=demand["ward_code"] or "unlocated",
+                count=demand["signal_count"],
+            ),
+            config={"response_mime_type": "application/json"},
+        )
+        data = json.loads(resp.text.strip().strip("`").removeprefix("json"))
+        modifier = min(1.25, max(0.8, float(data.get("modifier", 1.0))))
+        note = (data.get("note") or "")[:200]
+    except Exception as exc:
+        print(f"[ranking] directive modifier failed: {exc.__class__.__name__}")
+    db.execute(
+        text("UPDATE demands SET directive_modifier = :m, directive_note = :n, "
+             "directive_key = :k WHERE id = :id"),
+        {"m": modifier, "n": note, "k": key, "id": demand["id"]},
+    )
+    db.commit()
+    return modifier, note
+
+
 def rerank_all(db: Session) -> int:
     _refresh_trends(db)
     demands = db.execute(
-        text("SELECT id, signal_count, trend_7d, constituency FROM demands")
+        text("SELECT id, title, category, ward_code, signal_count, trend_7d, "
+             "constituency, directive_modifier, directive_note, directive_key "
+             "FROM demands")
     ).mappings().all()
     by_constituency: dict[str, list] = {}
     for d in demands:
-        ev = evidence.evidence_for(db, d["id"])
-        gap_weight = 1 + ev.get("gap_score", 0.5 if ev.get("available") else 0.0)
-        score = d["signal_count"] * (1 + (d["trend_7d"] or 0)) * gap_weight
-        by_constituency.setdefault(d["constituency"] or "south-delhi", []).append(
-            (d["id"], score, gap_weight, ev)
-        )
+        by_constituency.setdefault(d["constituency"] or "south-delhi", []).append(d)
 
     total = 0
-    for scored in by_constituency.values():  # rank is per-constituency
+    for constituency, group in by_constituency.items():
+        cfg = load_config(db, constituency)
+        boosts = cfg.get("category_boosts") or {}
+        directives = (cfg.get("directives") or "").strip()
+
+        scored = []
+        for d in group:
+            ev = evidence.evidence_for(db, d["id"])
+            gap_weight = 1 + ev.get("gap_score", 0.5 if ev.get("available") else 0.0)
+            trend_term = 1 + cfg["trend_weight"] * (d["trend_7d"] or 0)
+            evidence_term = 1 + cfg["evidence_weight"] * (gap_weight - 1)
+            boost = float(boosts.get(d["category"], 1.0))
+            base = max(0.0, d["signal_count"] * trend_term * evidence_term * boost)
+            ev.update({"gap_weight": gap_weight, "trend_weight": cfg["trend_weight"],
+                       "evidence_weight": cfg["evidence_weight"], "category_boost": boost})
+            scored.append([d, base, ev])
+
+        # plain-language office priorities: Gemini modifier for the top 15
+        if directives and settings.gemini_api_key:
+            scored.sort(key=lambda t: t[1], reverse=True)
+            for entry in scored[:15]:
+                modifier, note = _directive_modifier(db, entry[0], directives)
+                entry[1] *= modifier
+                entry[2]["directive_modifier"] = modifier
+                entry[2]["directive_note"] = note
+
         scored.sort(key=lambda t: t[1], reverse=True)
-        for rank, (demand_id, score, gap_weight, ev) in enumerate(scored, start=1):
-            ev["gap_weight"] = gap_weight
+        for rank, (d, score, ev) in enumerate(scored, start=1):
             db.execute(
-                text(
-                    "UPDATE demands SET score = :score, rank = :rank, evidence = :ev "
-                    "WHERE id = :id"
-                ),
-                {"id": demand_id, "score": score, "rank": rank, "ev": json.dumps(ev)},
+                text("UPDATE demands SET score = :score, rank = :rank, evidence = :ev "
+                     "WHERE id = :id"),
+                {"id": d["id"], "score": score, "rank": rank, "ev": json.dumps(ev)},
             )
             total += 1
     db.commit()

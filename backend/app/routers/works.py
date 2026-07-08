@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -6,6 +7,45 @@ from ..db import get_db
 from ..services import ranking
 
 router = APIRouter(tags=["works"])
+
+
+class RankingConfig(BaseModel):
+    trend_weight: float = 1.0
+    evidence_weight: float = 1.0
+    category_boosts: dict[str, float] = {}
+    directives: str = ""
+
+
+@router.get("/ranking-config")
+def get_ranking_config(c: str = "south-delhi", db: Session = Depends(get_db)):
+    return ranking.load_config(db, c)
+
+
+@router.put("/ranking-config")
+def put_ranking_config(body: RankingConfig, c: str = "south-delhi",
+                       db: Session = Depends(get_db)):
+    """MP-office control over the ranking formula: factor weights, category
+    boosts, and plain-language priorities the AI scores demands against."""
+    if not (0 <= body.trend_weight <= 2 and 0 <= body.evidence_weight <= 2):
+        raise HTTPException(status_code=422, detail="weights must be 0..2")
+    for k, v in body.category_boosts.items():
+        if not (0.5 <= v <= 2):
+            raise HTTPException(status_code=422, detail=f"boost {k} must be 0.5..2")
+    import json as _json
+    db.execute(
+        text(
+            "INSERT INTO ranking_config "
+            "(constituency, trend_weight, evidence_weight, category_boosts, directives, updated_at) "
+            "VALUES (:c, :tw, :ew, :cb, :d, now()) "
+            "ON CONFLICT (constituency) DO UPDATE SET trend_weight = :tw, "
+            "evidence_weight = :ew, category_boosts = :cb, directives = :d, updated_at = now()"
+        ),
+        {"c": c, "tw": body.trend_weight, "ew": body.evidence_weight,
+         "cb": _json.dumps(body.category_boosts), "d": body.directives[:1000]},
+    )
+    db.commit()
+    updated = ranking.rerank_all(db)
+    return {"saved": True, "reranked": updated}
 
 
 @router.get("/works")
