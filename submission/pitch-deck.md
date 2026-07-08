@@ -1,62 +1,58 @@
-# Pitch deck — 10 slides, mapped to the judging rubric
+# Pitch deck — speaker notes for sunwai-pitch.pptx (6 slides)
 
-> Port to Google Slides. Design language: ledger paper (#FAFAF7), register ink
-> (#1C2B4A), stamp red (#C1372A) only for the दर्ज stamp. Wordmark: सुनवाई in
-> Tiro Devanagari + lowercase "sunwai". Every number in IBM Plex Mono.
-
----
+> The deck itself is `sunwai-pitch.pptx` (screenshot-led, big type).
+> This file = what to SAY on each slide, ~60–75 seconds each.
 
 **Slide 1 — Title**
-सुनवाई sunwai — every voice, on the record.
-AI demand intelligence for an MP's office. Track 1: People's Priorities.
-(Photo: a stack of letters + a WhatsApp voice note bubble.)
+"This is Sunwai — every voice, on the record. It turns WhatsApp voice notes
+from citizens into evidence-ranked development priorities for an MP's office.
+What you're seeing is live right now — 378 voices across 5 constituencies in
+7 languages." *(Pause. Let the live number land.)*
 
-**Slide 2 — The problem** *(Problem-Solution Fit, 20%)*
-An MP represents 25 lakh people. Their needs arrive as letters, calls,
-social media, and lobbying — and the loudest voice wins.
-Quote the brief's own example: school upgrade vs vocational centre —
-which one does the constituency actually need?
+**Slide 2 — Problem + the loop**
+"An MP represents 25 lakh people. Needs arrive as letters, calls, and
+lobbying — the loudest voice wins. The brief's own example: school upgrade or
+vocational centre? Nobody can answer objectively today. Sunwai's loop: a
+citizen SPEAKS on WhatsApp in any language; Gemini STRUCTURES it; we WEIGH it
+against Census data; the office ACTS and the public sees it."
 
-**Slide 3 — The answer in one picture**
-Citizen voice note (Hindi) → structured demand → clustered with 46 others →
-cross-checked against Census → ranked #1 with a written justification →
-resolved on a public board. One flow diagram, no text walls.
+**Slide 3 — The engine**
+"Left: the live demand map of South Delhi. Right: the part I'm proudest of —
+55 reports about one blocked drain, in Hindi, Hinglish, and English, merged
+into ONE demand by embedding clustering. The office can flip any summary back
+to the citizen's original words. That's demand, deduplicated — real counts,
+not noise." *(If demoing live: send a voice note here.)*
 
-**Slide 4 — LIVE DEMO** *(AI/Technical Execution, 25%)*
-(Switch to product. Fallback screenshots embedded behind this slide.)
-1. Send WhatsApp voice note without naming a place → bot asks "which area?"
-   → answer by voice → pinned.
-2. Map: demand pops in live. 3. Ranked works: expand №1's evidence card.
-4. Silent Needs: Madangir. 5. Public board + one-click MP brief.
+**Slide 4 — Defensible and steerable**
+"Every rank shows its arithmetic: 45 submissions × 4.5 trend × 2.13 evidence
+gap — the facts cite Census 2011 and the SEC delimitation order, and the
+justification is AI-written from ONLY those figures. And the office holds the
+dials: weights, category boosts, or priorities typed in plain language —
+'water first before summer' — which the AI applies as a bounded, visible
+modifier. Steerable, never a black box."
 
-**Slide 5 — AI is the engine, not the garnish**
-Four Gemini jobs: multimodal structuring (voice/photo/any language, schema-
-validated), embedding clustering (Hindi+English+Bangla merge into one demand),
-evidence-cited justifications (cached, zero-cost reranks), conversational
-clarification. One line: "No AI call is decorative; remove any one and the
-product stops working."
+**Slide 5 — Silence + transparency**
+"Madangir: 44% Scheduled Caste, a resettlement colony, and just 3 submissions
+from 52,000 people. Silent Needs flags it for a field visit — AI that listens
+is good; AI that notices who ISN'T speaking is governance. And everything the
+MP sees, the public sees: raised, in progress, resolved, on a public board."
 
-**Slide 6 — Evidence, not vibes**
-The №1 evidence card, enlarged: score = 47 submissions × 1.4 trend × 2.1 gap.
-Facts sourced: SEC Delhi Delimitation 2022 / Census 2011, ward 176.
-"The MP can defend #1 over #7 in public — the formula is on the screen."
+**Slide 6 — Deploy + ask**
+"All of this runs on one ₹1,000-a-month server. Five constituencies are live
+— onboarding a new one is one config file. Total AI cost at pilot scale:
+five to fifteen dollars a month. The ask: pilot Sunwai in one constituency
+for 90 days — success is every rupee of the next MPLADS allocation traceable
+to ranked, evidenced public demand. Thank you."
 
-**Slide 7 — Who ISN'T speaking** *(Inclusivity, 15%)*
-Silent Needs: Madangir — 44.5% SC, resettlement colony, zero submissions →
-flagged for a field visit. "AI that listens is good. AI that notices who
-isn't speaking is governance."
-
-**Slide 8 — Deployability & cost** *(25% — the slide no other team has)*
-Runs on ONE ₹1,000/month VM. New constituency = one config file — shown live
-across 5 constituencies / 7 languages. ~$5–15/month Gemini at pilot scale.
-No apps, no hardware, no citizen training. Pilot-ready in 2 weeks.
-
-**Slide 9 — Transparency & trust**
-Public board: what's raised, what's in progress, what's resolved — same
-record the MP sees. Privacy: sender numbers hashed, no individual profiling,
-equity analysis is geographic and Census-based.
-
-**Slide 10 — The ask**
-Pilot sunwai in one constituency for 90 days. Success metric: every rupee of
-the next MPLADS allocation traceable to ranked, evidenced public demand.
-सुनवाई — हर आवाज़ दर्ज. (Contact + QR to the public board.)
+## Likely judge Q&A
+- **"Why is #1 above #2?"** → point at the formula on slide 4; recompute live.
+- **"What stops spam campaigns?"** → sender hashing + dedupe today; campaign
+  detection (burst/similarity analysis) is roadmap; evidence weighting already
+  dampens pure volume.
+- **"Where does caste data come from?"** → geographic Census aggregates only;
+  individuals never profiled (privacy line on the public board footer).
+- **"Real WhatsApp?"** → yes, Twilio Business API sandbox; direct Meta Cloud
+  API in production. Live demo available on request.
+- **"Expansion cities' data?"** → Delhi runs official SEC/Census figures;
+  expansion wards carry labeled approximate estimates until their official
+  loads — that's the onboarding step we'd do in week one of a pilot.

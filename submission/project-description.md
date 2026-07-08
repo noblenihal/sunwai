@@ -1,76 +1,82 @@
-# sunwai (सुनवाई) — copy-paste blurbs for the submission form
+# Sunwai — copy-paste blurbs for the submission form
 
 ## Project name
-**sunwai — every voice, on the record**
+**Sunwai — every voice, on the record**
 
 ## One-liner (≤140 chars)
-AI that turns WhatsApp voice notes from citizens into evidence-ranked development
-priorities for an MP's office — in any Indian language.
+AI that turns WhatsApp voice notes from citizens into evidence-ranked
+development priorities for an MP's office — in any Indian language.
 
-## Short description (~100 words)
-sunwai is a demand-intelligence engine for constituency development planning
-(Track 1: People's Priorities). Citizens send a voice note, photo, or text on
-WhatsApp in their own language — no app, no forms, no literacy requirement.
-Gemini transcribes, categorizes, and geolocates every submission; identical
-demands cluster across languages; and each clustered demand is cross-checked
-against Census and government ward data to produce a ranked, evidence-backed
-works list the MP can defend publicly. A Silent Needs view flags high-need
-wards that aren't submitting — the unheard, not the unneeding — and a public
-board shows every citizen what was raised and what got resolved.
+## "Explain your solution" (985 chars — fits a 1000 limit)
+> sunwai (सुनवाई) turns scattered citizen voices into evidence an MP can act
+> on. Citizens send a voice note, photo, or text on WhatsApp in any Indian
+> language — no app, no forms. Gemini transcribes and structures every
+> submission (category, location, urgency), filters noise, and asks a
+> clarifying question when the location is missing — answerable by voice.
+> Identical demands phrased in different languages merge via Gemini
+> embeddings + pgvector, so 47 complaints about one drain become a single
+> demand with real weight and trend. Each demand is cross-checked against
+> official ward data (Census 2011 / SEC Delhi Delimitation 2022) and ranked
+> by a visible formula — submissions × trend × evidence gap — with an
+> AI-written justification citing only sourced figures. A Silent Needs view
+> flags high-need wards that aren't submitting, and a public board shows
+> citizens what was raised and what got resolved. Live across 5
+> constituencies in 7 languages; a new constituency is one config file.
 
-## The problem (from the brief)
-MPs receive development requests through public meetings, letters, social
-media, and grievance portals, while development plans hold dozens of competing
-proposals. There is no objective way to consolidate citizen feedback, spot
-recurring needs, and weigh proposals against real demand.
+## The full feature set (live, not planned)
+- **WhatsApp intake** (Twilio Business API): voice/photo/text, any Indian
+  language; sense filter rejects non-civic noise; missing location triggers a
+  clarifying question answerable by voice; replies in the citizen's language
+  with an English footer; retry-safe dedupe; sender numbers hashed.
+- **AI structuring**: one Gemini multimodal call — transcription,
+  category, location, urgency — schema-validated JSON.
+- **Clustering**: gemini-embedding-001 + pgvector cosine; same demand across
+  Hindi/Hinglish/English/Bengali merges into one record with a live trend.
+- **Evidence-ranked works**: score = submissions × trend × evidence gap;
+  facts cite Census 2011 / SEC Delimitation 2022; cached Gemini
+  justifications (unchanged reranks cost zero).
+- **Office-configurable ranking**: sliders for momentum/evidence weights,
+  per-category boosts, and plain-language priorities ("water first before
+  summer") the AI applies as a bounded ×0.8–1.25 modifier with a visible
+  one-line reason.
+- **Silent Needs**: silence = need × (1 − voice); high-need low-voice wards
+  flagged for field visits.
+- **Transparency**: demand status lifecycle (open → in progress → resolved)
+  and a public board — the record the MP sees is the record the public sees.
+- **View originals**: every English summary flips back to the citizen's
+  actual words, per quote or all at once.
+- **One-page MP Brief** (print/PDF) for planning meetings.
+- **5 constituencies live** — South Delhi (official SEC/Census data) plus
+  Kolkata Dakshin, Ahmedabad East, Mumbai North East, Chennai South
+  (Bengali/Gujarati/Marathi/Tamil); new constituency = one config file.
 
-## How AI is the actual engine (not decorative)
-1. **Structuring** — one Gemini multimodal call per submission: transcribes
-   Indic-language audio, reads photos, extracts category/location/urgency,
-   returns schema-validated JSON, and rejects non-civic noise.
-2. **Clustering** — Gemini embeddings + pgvector cosine similarity merge the
-   same demand phrased in Hindi, Devanagari, English, or Bengali into one
-   record with a Gemini-written title.
-3. **Ranking** — score = submissions × trend × evidence-gap weight (weights
-   visible); Gemini writes a 3-sentence justification per top work, citing
-   only supplied figures, cached by input hash so unchanged data costs zero.
-4. **Conversation** — the WhatsApp bot asks a clarifying question when the
-   location is missing and accepts the answer by voice or text, replying in
-   the citizen's language with an English footer.
-
-## Evidence layer
-Pilot constituency: **South Delhi PC (Kalkaji segment, Govindpuri)** — all 12
-wards loaded with official figures from SEC Delhi Delimitation 2022 Annexure-1
-(Census 2011 population + SC share). Equity is geographic and Census-based:
-we never profile individual submitters. Four expansion constituencies
-(Kolkata Dakshin, Ahmedabad East, Mumbai North East, Chennai South) run live
-in Bengali, Gujarati, Marathi, and Tamil to demonstrate config-file onboarding.
-
-## Tech stack
-Gemini API (multimodal structuring, embeddings, generation) · Google Maps
-Platform (hotspot map, OSM fallback) · FastAPI · PostgreSQL + pgvector ·
-React · WhatsApp via Twilio Business API (Meta Cloud API in production) ·
-Docker Compose on a single VM · GitHub Actions CI/CD
+## Technologies used
+Google Gemini API (multimodal structuring & voice transcription with
+structured output; gemini-embedding-001 for clustering; bounded directive
+scoring), Google Maps JavaScript API with Leaflet/OpenStreetMap fallback,
+Twilio WhatsApp Business API, FastAPI (Python 3.12), PostgreSQL 16 +
+pgvector, React 18 (Vite), Caddy, Docker Compose on a DigitalOcean VM,
+GitHub Actions CI/CD. Public data: Census 2011, SEC Delhi Delimitation 2022.
 
 ## Deployability & cost (rubric: 25%)
-Runs today on one 2GB VM shared with three other apps. Onboarding a new
-constituency = one config file (ward list + centroids) — demonstrated live
-with 5 constituencies. Estimated run cost at demo scale: **~$5–15/month,
-all Gemini**; no per-citizen cost, no hardware, no app installs, no training.
+Runs today on one shared 2GB VM (~₹1,000/month, shared with other apps).
+Onboarding constituency #6 = one config file (ward list + centroids).
+Total AI cost at pilot scale: **~$5–15/month**. No apps, no hardware,
+no citizen training. Pilot-ready in a real constituency in ~2 weeks.
 
-## Inclusivity (rubric: 15%)
-Voice-first, any Indian language, works on any phone with WhatsApp; photo
-submissions for the non-literate; replies in the citizen's own language.
-Silent Needs inverts the usual bias: the system surfaces wards that DON'T
-complain. Roadmap: SMS/IVR fallback and assisted kiosks at panchayat offices.
+## Privacy & responsible AI
+Sender numbers hashed before storage; individuals never profiled; equity
+analysis is geographic and Census-based; every fact cites its source;
+approximate data is labeled approximate; the ranking formula and all AI
+modifiers are visible on screen.
 
 ## Impact
-One MP represents ~25 lakh citizens; 543 constituencies. The same engine
-generalizes to MLA constituencies and municipal wards. Transparency board
-closes the loop: the record the MP sees is the record the public sees.
+One MP ≈ 25 lakh citizens; 543 constituencies; the same engine generalizes
+to MLA constituencies and municipal wards.
 
 ## Live links
-- MP dashboard: http://168.144.24.204:8082
+- Landing: http://168.144.24.204:8082
+- MP dashboard: http://168.144.24.204:8082/app
 - Public board: http://168.144.24.204:8082/board
-- One-page MP brief: http://168.144.24.204:8082/api/brief
+- MP brief: http://168.144.24.204:8082/api/brief
 - Repo: https://github.com/noblenihal/sunwai
