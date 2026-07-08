@@ -22,6 +22,10 @@ a voice note, or a photo of a civic issue.
 - `location_text`: the place as stated/visible (colony, ward, landmark), else null.
 - `urgency`: 1 (suggestion) to 5 (safety risk / essential service down).
 - `summary_en`: one factual English sentence.
+- `is_civic_request`: false for greetings, confirmations, tests, spam,
+  unintelligible input, or anything that is not a civic complaint or a
+  development request/suggestion. When false, still fill summary_en with
+  what the input appears to be.
 
 Citizen input follows.
 """
@@ -39,8 +43,9 @@ _SIGNAL_SCHEMA = {
         "summary_en": {"type": "STRING"},
         "language": {"type": "STRING"},
         "transcript": {"type": "STRING", "nullable": True},
+        "is_civic_request": {"type": "BOOLEAN"},
     },
-    "required": ["category", "urgency", "summary_en", "language"],
+    "required": ["category", "urgency", "summary_en", "language", "is_civic_request"],
 }
 
 _MIME_BY_EXT = {
@@ -158,6 +163,20 @@ def process_submission(db: Session, submission_id: int) -> dict:
         data = _extract_with_gemini(raw, sub["media_url"])
     else:
         data = _extract_fallback(raw)
+
+    if not data.get("is_civic_request", True):
+        # noise (greeting/confirmation/spam): record the audit trail,
+        # create no signal, spend no embedding call
+        db.execute(
+            text(
+                "UPDATE submissions SET processed_at = now(), language = :lang, "
+                "raw_text = COALESCE(raw_text, :transcript) WHERE id = :id"
+            ),
+            {"id": submission_id, "lang": data.get("language"),
+             "transcript": data.get("transcript")},
+        )
+        db.commit()
+        return {"rejected": True, **data}
 
     ward_code = _resolve_ward(db, data.get("location_text"))
     embedding = _embed(data["summary_en"]) if settings.gemini_api_key else None

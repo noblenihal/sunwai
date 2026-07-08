@@ -11,7 +11,8 @@ CREATE TABLE submissions (
     language      TEXT,
     received_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
     processed_at  TIMESTAMPTZ,
-    wa_sid        TEXT UNIQUE            -- Twilio MessageSid, dedupes retries
+    wa_sid        TEXT UNIQUE,           -- Twilio MessageSid, dedupes retries
+    pending_clarification TEXT           -- 'location' while awaiting a follow-up
 );
 
 -- one structured signal per submission (Gemini output, stage 1)

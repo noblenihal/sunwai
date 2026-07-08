@@ -58,7 +58,7 @@ def reprocess(
         text(
             "SELECT s.id FROM submissions s "
             "LEFT JOIN demand_signals d ON d.submission_id = s.id "
-            "WHERE d.id IS NULL ORDER BY s.id"
+            "WHERE d.id IS NULL AND s.processed_at IS NULL ORDER BY s.id"
         )
     ).scalars().all()
     done, failed = [], []

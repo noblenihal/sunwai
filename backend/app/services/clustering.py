@@ -82,6 +82,27 @@ def _attach(db: Session, demand_id: int, sig, prev_count: int):
         )
 
 
+def reassign(db: Session, signal_id: int) -> int:
+    """Detach a signal from its demand (e.g. after a ward correction) and
+    re-cluster it. Centroid means are not recomputed on detach — acceptable
+    drift for single corrections."""
+    old = db.execute(
+        text("SELECT demand_id FROM demand_signals WHERE id = :id"), {"id": signal_id}
+    ).scalar_one()
+    if old:
+        db.execute(
+            text("UPDATE demands SET signal_count = signal_count - 1 WHERE id = :id"),
+            {"id": old},
+        )
+        db.execute(
+            text("UPDATE demand_signals SET demand_id = NULL WHERE id = :id"),
+            {"id": signal_id},
+        )
+        db.execute(text("DELETE FROM demands WHERE id = :id AND signal_count <= 0"), {"id": old})
+        db.commit()
+    return assign_to_demand(db, signal_id)
+
+
 def assign_to_demand(db: Session, signal_id: int) -> int:
     sig = db.execute(
         text("SELECT *, embedding::text AS embedding_txt FROM demand_signals WHERE id = :id"),
