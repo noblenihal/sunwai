@@ -87,8 +87,15 @@ export default function App() {
               <div className="card" key={w.id}>
                 <strong>#{w.rank} — {w.title}</strong>
                 <div className="muted">
-                  score {w.score?.toFixed(1)} = {w.signal_count} submissions × trend × evidence
+                  score {w.score?.toFixed(1)} = {w.signal_count} submissions
+                  × {(1 + (w.trend_7d || 0)).toFixed(2)} trend
+                  × {(w.evidence?.gap_weight ?? 1).toFixed(2)} evidence gap
                 </div>
+                {w.evidence?.facts?.length > 0 && (
+                  <ul className="muted" style={{ margin: '8px 0 0 18px' }}>
+                    {w.evidence.facts.map((f, i) => <li key={i}>{f}</li>)}
+                  </ul>
+                )}
                 {w.justification && <p style={{ marginTop: 8 }}>{w.justification}</p>}
               </div>
             ))}
