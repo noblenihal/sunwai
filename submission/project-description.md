@@ -74,6 +74,23 @@ modifiers are visible on screen.
 One MP ≈ 25 lakh citizens; 543 constituencies; the same engine generalizes
 to MLA constituencies and municipal wards.
 
+## How to test (2 minutes, no setup)
+
+1. **Try the WhatsApp bot from your own phone**: send `join <code>` to
+   **+1 415 523 8886** (Twilio sandbox), then send a voice note in any
+   Indian language — e.g. *"हमारी गली में स्ट्रीट लाइट खराब है"*. You'll get
+   a reply in your language with a reference number. Skip the location and
+   the bot asks for it — answer by voice.
+2. **Watch it land**: open the dashboard → Hotspot Map (South Delhi).
+   Your demand appears within ~10 seconds, clustered if others said the
+   same thing. Click it → "View Originals" shows citizens' actual words.
+3. **Interrogate a rank**: Ranked Works → any card shows its formula,
+   Census-cited facts and AI justification. Open **Ranking Parameters**,
+   type a priority like "water issues first", Save & Rerank — watch the
+   order change with a visible, bounded modifier.
+4. **Check the loop**: Silent Needs (Madangir's story), then the public
+   board (/board) — mark a work "Resolved" in the dashboard and see it move.
+
 ## Live links
 - Landing: http://168.144.24.204:8082
 - MP dashboard: http://168.144.24.204:8082/app

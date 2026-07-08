@@ -46,6 +46,17 @@ demo/seed intake ───┤→ STRUCTURE (Gemini multimodal, schema-validated)
 Stack: FastAPI · PostgreSQL+pgvector · React (Vite) · Caddy · Gemini API ·
 Google Maps (OSM fallback) · Docker Compose on one 2GB VM · GitHub Actions CD.
 
+## How to test (no setup)
+
+1. **WhatsApp**: send `join <code>` to **+1 415 523 8886**, then a voice
+   note in any Indian language. No location? The bot asks — answer by voice.
+2. Open the [dashboard](http://168.144.24.204:8082/app): your demand appears
+   on the map in ~10s. Click it → *View Originals* for citizens' real words.
+3. *Ranked Works* → open **Ranking Parameters**, type "water issues first",
+   Save & Rerank — the order changes with a visible, bounded AI modifier.
+4. Mark a work *Resolved* → watch it move on the
+   [public board](http://168.144.24.204:8082/board).
+
 ## Run it
 
 ```bash
