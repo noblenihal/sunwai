@@ -52,6 +52,7 @@ ALTER TABLE demand_signals
 CREATE TABLE wards (
     ward_code     TEXT PRIMARY KEY,
     name          TEXT NOT NULL,
+    aliases       TEXT[],
     lat           DOUBLE PRECISION,
     lon           DOUBLE PRECISION,
     population    INT,
