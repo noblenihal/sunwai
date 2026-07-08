@@ -92,8 +92,8 @@ to MLA constituencies and municipal wards.
    board (/board) — mark a work "Resolved" in the dashboard and see it move.
 
 ## Live links
-- Landing: http://168.144.24.204:8082
-- MP dashboard: http://168.144.24.204:8082/app
-- Public board: http://168.144.24.204:8082/board
-- MP brief: http://168.144.24.204:8082/api/brief
+- Landing: https://sunwai.168-144-24-204.sslip.io
+- MP dashboard: https://sunwai.168-144-24-204.sslip.io/app
+- Public board: https://sunwai.168-144-24-204.sslip.io/board
+- MP brief: https://sunwai.168-144-24-204.sslip.io/api/brief
 - Repo: https://github.com/noblenihal/sunwai

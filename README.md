@@ -6,9 +6,9 @@ Built for *Build with AI: Code for Communities* — Track 1: People's Priorities
 Citizens talk to WhatsApp in any Indian language. MPs look at a dashboard.
 In between sits an engine that converts noise into evidence.
 
-**Live:** [MP dashboard](http://168.144.24.204:8082) ·
-[Public transparency board](http://168.144.24.204:8082/board) ·
-[One-page MP brief](http://168.144.24.204:8082/api/brief)
+**Live:** [MP dashboard](https://sunwai.168-144-24-204.sslip.io) ·
+[Public transparency board](https://sunwai.168-144-24-204.sslip.io/board) ·
+[One-page MP brief](https://sunwai.168-144-24-204.sslip.io/api/brief)
 
 ## What it does
 
@@ -50,12 +50,12 @@ Google Maps (OSM fallback) · Docker Compose on one 2GB VM · GitHub Actions CD.
 
 1. **WhatsApp**: send `join mistake-won` to **+1 415 523 8886**, then a voice
    note in any Indian language. No location? The bot asks — answer by voice.
-2. Open the [dashboard](http://168.144.24.204:8082/app): your demand appears
+2. Open the [dashboard](https://sunwai.168-144-24-204.sslip.io/app): your demand appears
    on the map in ~10s. Click it → *View Originals* for citizens' real words.
 3. *Ranked Works* → open **Ranking Parameters**, type "water issues first",
    Save & Rerank — the order changes with a visible, bounded AI modifier.
 4. Mark a work *Resolved* → watch it move on the
-   [public board](http://168.144.24.204:8082/board).
+   [public board](https://sunwai.168-144-24-204.sslip.io/board).
 
 ## Run it
 

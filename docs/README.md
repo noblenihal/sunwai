@@ -15,12 +15,12 @@ FastAPI, `web` Caddy+React on :8082), GitHub Actions auto-deploy on push to
 | F7 | MP Brief export | [F7-mp-brief-pdf.md](F7-mp-brief-pdf.md) | ✅ print-CSS brief at /api/brief |
 
 Remaining to go fully live: create Twilio account → set sandbox webhook to
-`http://168.144.24.204:8082/api/whatsapp/webhook` → send `join <code>` from
+`https://sunwai.168-144-24-204.sslip.io/api/whatsapp/webhook` → send `join <code>` from
 a phone → WhatsApp a voice note.
 
 ## Conventions used in every doc
 
-- All API paths are relative to `http://168.144.24.204:8082` (prod) or
+- All API paths are relative to `https://sunwai.168-144-24-204.sslip.io` (prod) or
   `http://localhost:8082` (local compose).
 - `$DEMO_TOKEN` = `DEMO_INJECT_TOKEN` from `/opt/sunwai/.env.local`.
 - "Redeploy" always means: commit → push to `main` → Actions deploys →
