@@ -6,15 +6,17 @@ FastAPI, `web` Caddy+React on :8082), GitHub Actions auto-deploy on push to
 
 | # | Feature | Doc | Status |
 |---|---------|-----|--------|
-| F1 | WhatsApp intake (voice/text/photo) | [F1-whatsapp-intake.md](F1-whatsapp-intake.md) | webhook stubbed |
-| F2 | AI structuring of submissions | [F2-structuring.md](F2-structuring.md) | **text done**; voice+image pending |
-| F3 | Clustering + hotspot map | [F3-clustering-map.md](F3-clustering-map.md) | heuristic done; embeddings+map pending |
-| F4 | Evidence fusion (public data) | [F4-evidence-fusion.md](F4-evidence-fusion.md) | schema ready; data load pending |
-| F5 | Ranked works + justifications | [F5-ranked-works.md](F5-ranked-works.md) | scoring done; Gemini justifications pending |
-| F6 | Silent Needs tab | [F6-silent-needs.md](F6-silent-needs.md) | endpoint done; scoring pending |
-| F7 | MP Brief PDF export | [F7-mp-brief-pdf.md](F7-mp-brief-pdf.md) | not started |
+| F1 | WhatsApp intake (Twilio) | [F1-whatsapp-intake.md](F1-whatsapp-intake.md) | **code live**; needs Twilio account + webhook URL set |
+| F2 | AI structuring of submissions | [F2-structuring.md](F2-structuring.md) | ✅ text/voice/photo, ward resolution, embeddings |
+| F3 | Clustering + hotspot map | [F3-clustering-map.md](F3-clustering-map.md) | ✅ embedding clustering, trends, Google Map |
+| F4 | Evidence fusion (public data) | [F4-evidence-fusion.md](F4-evidence-fusion.md) | ✅ 12 wards, Census 2011 / SEC 2022 data |
+| F5 | Ranked works + justifications | [F5-ranked-works.md](F5-ranked-works.md) | ✅ gap-weighted scoring, cached Flash justifications |
+| F6 | Silent Needs tab | [F6-silent-needs.md](F6-silent-needs.md) | ✅ silence = need × (1−voice), field-visit flags |
+| F7 | MP Brief export | [F7-mp-brief-pdf.md](F7-mp-brief-pdf.md) | ✅ print-CSS brief at /api/brief |
 
-Recommended build order: **F2 (finish) → F3 → F5 → F4 → F6 → F7 → F1**.
+Remaining to go fully live: create Twilio account → set sandbox webhook to
+`http://168.144.24.204:8082/api/whatsapp/webhook` → send `join <code>` from
+a phone → WhatsApp a voice note.
 
 ## Conventions used in every doc
 
