@@ -85,7 +85,8 @@ def get_demand(demand_id: int, db: Session = Depends(get_db)):
     ).mappings().first()
     signals = db.execute(
         text(
-            "SELECT s.summary_en, s.urgency, s.created_at, sub.kind, sub.language "
+            "SELECT s.summary_en, s.urgency, s.created_at, sub.kind, sub.language, "
+            "       sub.raw_text AS original "
             "FROM demand_signals s JOIN submissions sub ON sub.id = s.submission_id "
             "WHERE s.demand_id = :id ORDER BY s.created_at DESC LIMIT 20"
         ),

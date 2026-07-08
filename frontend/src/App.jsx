@@ -16,6 +16,46 @@ export default function App() {
 
 const CATEGORIES = ['road', 'water', 'school', 'health', 'drainage', 'electricity', 'other']
 
+function DemandPanel({ selected, onClose }) {
+  const [origAll, setOrigAll] = useState(false)
+  const [origOne, setOrigOne] = useState({})
+
+  useEffect(() => { setOrigAll(false); setOrigOne({}) }, [selected?.demand?.id])
+
+  const isOrig = i => origOne[i] ?? origAll
+  const hasOriginals = selected.sample_signals?.some(s => s.original)
+
+  return (
+    <div className="card" style={{ flex: 1, position: 'sticky', top: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+        <strong>{selected.demand.title}</strong>
+        {hasOriginals && (
+          <button className="plain" style={{ marginLeft: 'auto' }}
+                  onClick={() => { setOrigAll(!origAll); setOrigOne({}) }}>
+            {origAll ? 'view summaries' : 'view originals'}
+          </button>
+        )}
+      </div>
+      <div className="fact">{selected.demand.signal_count} submissions on record</div>
+      <hr style={{ border: 'none', borderTop: '1px solid var(--rule)', margin: '10px 0' }} />
+      {selected.sample_signals?.map((s, i) => (
+        <p key={i} style={{ marginBottom: 10, fontSize: 14 }}>
+          <span className="fact">[{s.kind}{s.language ? `, ${s.language}` : ''}]</span>{' '}
+          {isOrig(i) && s.original ? <span lang="und">{s.original}</span> : s.summary_en}
+          {s.original && (
+            <button className="plain"
+                    style={{ marginLeft: 8, padding: '1px 8px', fontSize: 11 }}
+                    onClick={() => setOrigOne({ ...origOne, [i]: !isOrig(i) })}>
+              {isOrig(i) ? 'summary' : 'original'}
+            </button>
+          )}
+        </p>
+      ))}
+      <button className="plain" onClick={onClose}>close</button>
+    </div>
+  )
+}
+
 function RankingSettings({ con, onSaved }) {
   const [open, setOpen] = useState(false)
   const [cfg, setCfg] = useState(null)
@@ -193,17 +233,7 @@ function Dashboard() {
                 ))}
               </div>
               {selected?.demand && (
-                <div className="card" style={{ flex: 1, position: 'sticky', top: 12 }}>
-                  <strong>{selected.demand.title}</strong>
-                  <div className="fact">{selected.demand.signal_count} submissions on record</div>
-                  <hr style={{ border: 'none', borderTop: '1px solid var(--rule)', margin: '10px 0' }} />
-                  {selected.sample_signals?.map((s, i) => (
-                    <p key={i} style={{ marginBottom: 8, fontSize: 14 }}>
-                      <span className="fact">[{s.kind}{s.language ? `, ${s.language}` : ''}]</span> {s.summary_en}
-                    </p>
-                  ))}
-                  <button className="plain" onClick={() => setSelected(null)}>close</button>
-                </div>
+                <DemandPanel selected={selected} onClose={() => setSelected(null)} />
               )}
             </div>
           </>
