@@ -37,6 +37,23 @@ def _parse_first_json(s: str) -> dict:
     return obj
 
 
+_SIGNAL_SCHEMA = {
+    "type": "OBJECT",
+    "properties": {
+        "category": {
+            "type": "STRING",
+            "enum": ["road", "water", "school", "health", "drainage", "electricity", "other"],
+        },
+        "sub_type": {"type": "STRING", "nullable": True},
+        "location_text": {"type": "STRING", "nullable": True},
+        "urgency": {"type": "INTEGER"},
+        "summary_en": {"type": "STRING"},
+        "language": {"type": "STRING"},
+    },
+    "required": ["category", "urgency", "summary_en", "language"],
+}
+
+
 def _extract_with_gemini(raw_text: str) -> dict:
     from google import genai
 
@@ -44,9 +61,16 @@ def _extract_with_gemini(raw_text: str) -> dict:
     resp = client.models.generate_content(
         model=settings.structuring_model,
         contents=EXTRACTION_PROMPT + raw_text,
-        config={"response_mime_type": "application/json"},
+        config={
+            "response_mime_type": "application/json",
+            "response_schema": _SIGNAL_SCHEMA,
+        },
     )
-    return _parse_first_json(resp.text)
+    try:
+        return _parse_first_json(resp.text)
+    except json.JSONDecodeError:
+        print(f"[structuring] unparseable model output: {resp.text[:300]!r}")
+        raise
 
 
 def _extract_fallback(raw_text: str) -> dict:

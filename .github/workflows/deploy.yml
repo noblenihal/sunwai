@@ -19,9 +19,9 @@ jobs:
           host: ${{ secrets.DROPLET_HOST }}
           username: root
           key: ${{ secrets.DROPLET_SSH_KEY }}
-          script_stop: true
           command_timeout: 15m
           script: |
+            set -e
             cd /opt/sunwai
             git fetch origin main
             git reset --hard origin/main
