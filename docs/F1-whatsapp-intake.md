@@ -6,23 +6,25 @@ the citizen's language.
 
 Build this LAST — everything else demos via `/api/ingest/demo`.
 
+## Channel decision (2026-07-08)
+
+**Twilio WhatsApp Sandbox** — user's Facebook access is blocked, so the Meta
+Cloud API path is out. Twilio needs no Meta account (email+phone signup,
+free trial), supports inbound voice/photo media, allows plain-HTTP webhooks
+(no tunnel needed), and demos via a join-code: participants WhatsApp
+`join <code>` to the shared sandbox number, then talk to sunwai.
+Production story for the pitch: direct Meta WhatsApp Business API.
+
 ## Prerequisites
 
-- [ ] Meta developer account (developers.facebook.com) + a Meta Business app
-- [ ] WhatsApp product added to the app → gives a **test number** free
-      (sandbox: up to 5 recipient numbers — enough for the demo)
-- [ ] From the app dashboard note: `WHATSAPP_ACCESS_TOKEN` (temporary 24h
-      token is fine for hackathon; permanent token needs a System User),
-      `WHATSAPP_PHONE_NUMBER_ID`
-- [ ] Pick any random string as `WHATSAPP_VERIFY_TOKEN`
-- [ ] Public HTTPS endpoint for the webhook — Meta REQUIRES https.
-      The droplet serves plain http on :8082, so either:
-      (a) quickest: `cloudflared tunnel --url http://localhost:8082` on the
-          droplet → gives an https URL, or
-      (b) proper: point a domain at the droplet, add a sunwai site to a Caddy
-          with 80/443 (extratickets' Caddy owns those ports — add a vhost
-          there proxying to sunwai-web-1)
-- [ ] F2 complete (structuring handles text at minimum)
+- [ ] Twilio account (twilio.com — email + phone verify, no card for trial)
+- [ ] From Console → Messaging → Try it out → "Send a WhatsApp message":
+      note the sandbox number + join code; set
+      "When a message comes in" = `http://168.144.24.204:8082/api/whatsapp/webhook`
+- [ ] `TWILIO_ACCOUNT_SID` (AC…) + `TWILIO_AUTH_TOKEN` into
+      `/opt/sunwai/.env.local` (auth token needed to download media URLs
+      and validate webhook signatures)
+- [ ] F2 complete (structuring handles text at minimum) — DONE
 
 ## Step-by-step
 
