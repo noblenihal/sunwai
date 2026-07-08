@@ -109,7 +109,7 @@ function Dashboard() {
                   <div className="row" key={d.id} onClick={() => openDemand(d.id)} style={{ cursor: 'pointer' }}>
                     <span className="pill">{d.category}</span>
                     <strong>{d.title}</strong>
-                    {d.status !== 'open' && <span className={`pill ${d.status === 'resolved' ? '' : 'pill-visit'}`} style={{ marginLeft: 8 }}>{STATUS_LABEL[d.status]}</span>}
+                    {d.status !== 'open' && <span className={`pill ${d.status === 'resolved' ? 'pill-done' : 'pill-visit'}`} style={{ marginLeft: 8 }}>{STATUS_LABEL[d.status]}</span>}
                     <div className="fact" style={{ marginTop: 4 }}>
                       {d.signal_count} submissions
                       {d.trend_7d ? ` · ${d.trend_7d > 0 ? '↑' : '↓'}${Math.abs(Math.round(d.trend_7d * 100))}%/wk` : ''}
