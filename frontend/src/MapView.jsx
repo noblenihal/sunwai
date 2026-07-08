@@ -30,6 +30,12 @@ export default function MapView({ demands, onSelect, center }) {
   const ctr = center ? { lat: center.lat, lng: center.lon } : CENTER
 
   useEffect(() => {
+    // Google reports key/project auth failures (e.g. ProjectDeniedMapError)
+    // through this global AFTER the script loads — flip to the OSM fallback.
+    window.gm_authFailure = () => {
+      mapRef.current = null
+      setFailed(true)
+    }
     loadMaps()
       .then(maps => {
         if (!divRef.current || mapRef.current) return
