@@ -101,6 +101,21 @@ def assign_to_demand(db: Session, signal_id: int) -> int:
             if near and near["sim"] >= CROSS_WARD_SIM_THRESHOLD:
                 demand_id = near["id"]
                 _attach(db, demand_id, sig, near["signal_count"])
+        if demand_id is None:
+            # demands created without embeddings are invisible to the
+            # similarity search — adopt them by category+ward (and _attach
+            # seeds their centroid from this signal)
+            row = db.execute(
+                text(
+                    "SELECT id, signal_count FROM demands WHERE category = :cat "
+                    "AND ward_code IS NOT DISTINCT FROM :ward "
+                    "AND centroid IS NULL LIMIT 1"
+                ),
+                {"cat": sig["category"], "ward": sig["ward_code"]},
+            ).mappings().first()
+            if row:
+                demand_id = row["id"]
+                _attach(db, demand_id, sig, row["signal_count"])
     else:
         row = db.execute(
             text(
