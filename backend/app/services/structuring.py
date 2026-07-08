@@ -27,6 +27,16 @@ _KEYWORDS = {
 }
 
 
+def _parse_first_json(s: str) -> dict:
+    """Gemini sometimes appends extra content after the JSON object —
+    take the first valid object instead of trusting the whole body."""
+    s = s.strip()
+    if s.startswith("```"):
+        s = s.strip("`").removeprefix("json").strip()
+    obj, _ = json.JSONDecoder().raw_decode(s)
+    return obj
+
+
 def _extract_with_gemini(raw_text: str) -> dict:
     from google import genai
 
@@ -36,7 +46,7 @@ def _extract_with_gemini(raw_text: str) -> dict:
         contents=EXTRACTION_PROMPT + raw_text,
         config={"response_mime_type": "application/json"},
     )
-    return json.loads(resp.text)
+    return _parse_first_json(resp.text)
 
 
 def _extract_fallback(raw_text: str) -> dict:
